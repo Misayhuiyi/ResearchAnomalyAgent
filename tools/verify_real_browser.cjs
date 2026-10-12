@@ -1,0 +1,40 @@
+const fs=require('fs'),path=require('path'),{chromium}=require('playwright');
+const root=path.resolve(__dirname,'..'),base=process.env.REAL_DEMO_URL||'http://127.0.0.1:8878';
+if(new URL(base).hostname!=='127.0.0.1')throw Error('Real paper browser test must use loopback.');
+const folder=path.join(root,'docs/verification/2026-09-30-real-paper'),
+      out=path.resolve(process.env.PAPER_AUDIT_VERIFICATION_DIR||folder),checks=[];
+if(!out.startsWith(path.join(root,'docs','verification')+path.sep))throw Error('Verification directory must be inside docs/verification.');
+fs.mkdirSync(out,{recursive:true});
+const assert=(condition,message)=>{if(!condition)throw Error(message)};
+(async()=>{const browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1440,height:1000}}),errors=[];
+page.on('pageerror',error=>errors.push(error.message));
+try{
+ await page.goto(base,{waitUntil:'networkidle'});
+ await page.setInputFiles('#fileInput',['Gorman2014.pdf','penguins_raw.csv'].map(n=>path.join(folder,'materials',n)));
+ await page.waitForFunction(()=>!document.getElementById('scanBtn').disabled);await page.click('#scanBtn');
+ await page.waitForSelector('#resultView:not(.hidden)',{timeout:190000});
+ const result=await page.evaluate(()=>currentResult);
+ assert(result.materials.length===2&&result.summary.findings===23,'Real inputs/findings changed; inspect instead of accepting new baseline');
+ checks.push('真实论文与原始CSV完成检查，读取情况有来源');
+ const finding=result.findings.find(f=>f.kind==='identical_after_rounding'&&f.raw.rounded_to===-25.1);
+ assert(finding.evidence.focus_cells.length===9,'Nine source cells must be available');
+ await page.locator(`[data-finding="${finding.id}"]`).click();
+ assert((await page.innerText('#evidenceTable')).includes('-25.14591'),'Full original precision not rendered');
+ assert((await page.innerText('#evidenceTable')).includes('Delta 13 C'),'Original column missing');
+ checks.push('9处同舍入值完整显示原始5位小数、行号与原始列名');
+ await page.screenshot({path:path.join(out,'real-evidence.png'),fullPage:true});
+ await page.click('#freezeReport');await page.waitForSelector('#reportDownloads a',{timeout:90000});
+ const links=await page.locator('#reportDownloads a').evaluateAll(a=>a.map(x=>({name:x.textContent,href:x.getAttribute('href')})));
+ assert(links.length===4,'Four formats missing');
+ for(const link of links){const response=await page.request.get(base+link.href);assert(response.ok(),'Report download failed');
+   const buffer=await response.body();assert(buffer.length>100,'Empty report');
+   if(link.name.includes('HTML'))assert(buffer.toString().includes('-25.14591'),'Report lost source precision');}
+ checks.push('四种格式真实生成并下载，同版原始数值保留');
+ await page.reload({waitUntil:'networkidle'});await page.evaluate(id=>openJob(id),result.scan_id);
+ await page.waitForSelector('#resultView:not(.hidden)');
+ assert((await page.evaluate(()=>currentResult.scan_id))===result.scan_id,'History differs');
+ checks.push('真实论文历史重新打开，未调用模型');
+ assert(!errors.length,errors.join('\n'));checks.push('浏览器无未处理脚本错误');
+ fs.writeFileSync(path.join(out,'real-browser.json'),JSON.stringify({at:new Date().toISOString(),scan_id:result.scan_id,checks,model_calls:0,passed:true,human_acceptance:'pending'},null,2));
+ console.log(JSON.stringify({passed:checks.length,scan_id:result.scan_id}));
+}finally{await browser.close()}})().catch(error=>{fs.writeFileSync(path.join(out,'real-browser-failure.json'),JSON.stringify({at:new Date().toISOString(),checks,error:error.message},null,2));console.error(error);process.exitCode=1});

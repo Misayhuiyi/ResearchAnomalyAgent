@@ -1,0 +1,824 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>慧研鉴证｜论文科研数据异常筛查 Agent</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --bg: #eef3f9;
+      --shell: rgba(250, 252, 255, .92);
+      --side: rgba(244, 247, 252, .92);
+      --surface: #ffffff;
+      --surface-2: #f7f9fc;
+      --line: #e2e9f2;
+      --line-strong: #d3deea;
+      --text: #152033;
+      --muted: #75849a;
+      --blue: #1688ff;
+      --blue-2: #3a9aff;
+      --blue-soft: #eaf4ff;
+      --cyan: #48c5d8;
+      --green: #25b985;
+      --green-soft: #e9f9f3;
+      --amber: #e6a23c;
+      --amber-soft: #fff6e5;
+      --red: #ed6565;
+      --red-soft: #fff0f0;
+      --purple: #8d7cf3;
+      --purple-soft: #f1efff;
+      --shadow: 0 20px 70px rgba(27, 48, 78, .12);
+      font-family: Arial, "Microsoft YaHei", sans-serif;
+      font-size: 13px;
+    }
+
+    * { box-sizing: border-box; }
+    html, body { margin: 0; min-height: 100%; color: var(--text); }
+    body {
+      min-height: 100vh;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 8% -6%, rgba(40, 141, 255, .16), transparent 30%),
+        radial-gradient(circle at 92% 4%, rgba(50, 199, 157, .13), transparent 30%),
+        linear-gradient(135deg, #fafcff 0%, #edf3f9 58%, #e7edf5 100%);
+    }
+    button, input, select, textarea { font: inherit; color: inherit; }
+    button { cursor: pointer; }
+    .app-shell {
+      width: min(1540px, calc(100vw - 28px));
+      height: min(970px, calc(100vh - 28px));
+      margin: 14px auto;
+      display: grid;
+      grid-template-columns: 248px minmax(0, 1fr);
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,.95);
+      border-radius: 24px;
+      background: var(--shell);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(24px) saturate(1.12);
+    }
+    .sidebar {
+      display: grid;
+      grid-template-rows: auto auto minmax(0,1fr) auto;
+      min-width: 0;
+      border-right: 1px solid rgba(210, 220, 233, .9);
+      background: var(--side);
+      backdrop-filter: blur(20px);
+    }
+    .traffic { display: flex; gap: 8px; padding: 14px 15px 5px; }
+    .traffic i { width: 12px; height: 12px; border-radius: 50%; display: block; box-shadow: inset 0 0 0 1px rgba(0,0,0,.07); }
+    .traffic i:nth-child(1) { background:#ff6159; }
+    .traffic i:nth-child(2) { background:#ffbd2e; }
+    .traffic i:nth-child(3) { background:#28c941; }
+    .brand {
+      display: grid;
+      grid-template-columns: 44px 1fr;
+      gap: 10px;
+      align-items: center;
+      padding: 7px 15px 15px;
+      border-bottom: 2px solid rgba(211, 221, 234, .75);
+    }
+    .brand-mark {
+      width: 44px; height: 44px; position: relative; display: grid; place-items: center;
+      border-radius: 15px; color: white; font-size: 20px; font-weight: 800;
+      background: linear-gradient(145deg, #43b9ff, #1778ef 62%, #5d67e9);
+      box-shadow: 0 9px 22px rgba(22,136,255,.25);
+    }
+    .brand-mark::before { content:""; position:absolute; inset:7px; border:1.5px solid rgba(255,255,255,.72); border-radius:50%; }
+    .brand-mark b { position: relative; letter-spacing: -2px; }
+    .brand strong { display:block; font-size:15px; letter-spacing:-.2px; line-height:1.25; }
+    .brand small { display:block; margin-top:4px; color:var(--muted); font-size:11px; }
+    .nav-wrap { min-height:0; overflow:auto; padding:12px 11px; scrollbar-width:thin; }
+    .nav-group-title { padding: 10px 12px 7px; color:#9aa6b5; font-size:10px; font-weight:700; letter-spacing:1.1px; }
+    .nav-item {
+      width:100%; min-height:38px; display:flex; align-items:center; gap:10px;
+      margin:2px 0; padding:0 12px; border:1px solid transparent; border-radius:11px;
+      background:transparent; color:#4b586b; text-align:left; transition:.16s ease;
+    }
+    .nav-item:hover { background:rgba(255,255,255,.72); color:#256eb8; }
+    .nav-item.active { background:white; color:#1478d6; border-color:#edf1f6; box-shadow:0 7px 18px rgba(49,78,112,.07); font-weight:650; }
+    .nav-item svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; flex:0 0 auto; }
+    .nav-item .count { margin-left:auto; min-width:21px; height:19px; padding:0 6px; display:grid; place-items:center; border-radius:10px; background:#eef3f8; color:#718096; font-size:10px; }
+    .nav-item.active .count { background:var(--blue-soft); color:var(--blue); }
+    .side-footer { padding:10px 11px 13px; border-top:1px solid rgba(218,226,236,.75); }
+    .console-chip { display:flex; align-items:center; gap:9px; padding:9px 11px; border-radius:12px; background:rgba(255,255,255,.72); border:1px solid #e8edf4; }
+    .console-chip .dot { width:8px; height:8px; background:var(--green); border-radius:50%; box-shadow:0 0 0 4px rgba(37,185,133,.12); }
+    .console-chip span { flex:1; min-width:0; }
+    .console-chip small { display:block; color:var(--muted); margin-top:2px; font-size:10px; }
+    .main { min-width:0; min-height:0; display:grid; grid-template-rows:66px minmax(0,1fr); }
+    .topbar { display:flex; align-items:center; gap:14px; padding:0 22px; border-bottom:1px solid rgba(223,231,240,.88); background:rgba(255,255,255,.54); backdrop-filter:blur(18px); }
+    .page-title { min-width:0; flex:1; }
+    .page-title h1 { margin:0; font-size:20px; letter-spacing:-.4px; }
+    .page-title p { margin:4px 0 0; color:var(--muted); font-size:11.5px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .console-select { height:36px; min-width:150px; border:1px solid var(--line); border-radius:11px; padding:0 30px 0 11px; background:white; outline:none; }
+    .icon-btn { width:36px; height:36px; display:grid; place-items:center; border:1px solid var(--line); border-radius:11px; background:white; color:#6d7a8c; position:relative; }
+    .icon-btn:hover { border-color:#bddcff; color:var(--blue); }
+    .icon-btn svg { width:18px; height:18px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .notify-dot { position:absolute; top:7px; right:7px; width:6px; height:6px; background:var(--red); border:2px solid white; border-radius:50%; }
+    .avatar { width:36px; height:36px; border-radius:12px; background:linear-gradient(145deg,#d8edff,#eef7ff); display:grid; place-items:center; color:#2678c7; font-weight:800; border:1px solid #cfe4f8; }
+    .content { min-width:0; min-height:0; overflow:auto; padding:20px 22px 26px; scroll-behavior:smooth; }
+    .content::-webkit-scrollbar, .nav-wrap::-webkit-scrollbar { width:7px; }
+    .content::-webkit-scrollbar-thumb, .nav-wrap::-webkit-scrollbar-thumb { background:#d7e0eb; border-radius:10px; }
+    .page-head { display:flex; justify-content:space-between; gap:18px; align-items:flex-start; margin-bottom:16px; }
+    .page-head h2 { margin:0; font-size:22px; letter-spacing:-.45px; }
+    .page-head p { margin:6px 0 0; color:var(--muted); line-height:1.6; max-width:760px; }
+    .actions { display:flex; align-items:center; gap:9px; flex-wrap:wrap; }
+    .btn { height:36px; display:inline-flex; align-items:center; justify-content:center; gap:7px; padding:0 14px; border:1px solid var(--line-strong); border-radius:11px; background:white; color:#445268; font-weight:600; transition:.15s; }
+    .btn:hover { transform:translateY(-1px); box-shadow:0 6px 15px rgba(35,64,97,.09); }
+    .btn.primary { color:white; border-color:var(--blue); background:linear-gradient(135deg,#2294ff,#167af0); box-shadow:0 8px 18px rgba(22,136,255,.2); }
+    .btn.danger { color:var(--red); border-color:#f2cccc; background:#fffafa; }
+    .btn.soft { color:#1977cd; background:var(--blue-soft); border-color:#d7ebff; }
+    .btn svg { width:16px; height:16px; stroke:currentColor; fill:none; stroke-width:1.9; stroke-linecap:round; stroke-linejoin:round; }
+    .stats { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:12px; margin-bottom:14px; }
+    .stat-card { min-width:0; padding:15px 16px; border:1px solid var(--line); border-radius:17px; background:rgba(255,255,255,.94); box-shadow:0 10px 27px rgba(30,55,84,.06); }
+    .stat-top { display:flex; justify-content:space-between; align-items:center; gap:8px; color:var(--muted); }
+    .stat-icon { width:32px; height:32px; display:grid; place-items:center; border-radius:10px; background:var(--blue-soft); color:var(--blue); }
+    .stat-icon.green { background:var(--green-soft); color:var(--green); }
+    .stat-icon.amber { background:var(--amber-soft); color:var(--amber); }
+    .stat-icon.red { background:var(--red-soft); color:var(--red); }
+    .stat-icon.purple { background:var(--purple-soft); color:var(--purple); }
+    .stat-icon svg { width:17px; height:17px; stroke:currentColor; fill:none; stroke-width:1.8; stroke-linecap:round; stroke-linejoin:round; }
+    .stat-value { margin-top:10px; display:flex; align-items:baseline; gap:7px; }
+    .stat-value strong { font-size:25px; letter-spacing:-.7px; }
+    .stat-value small { color:var(--green); }
+    .stat-card > small { display:block; margin-top:5px; color:#9aa6b6; }
+    .grid-2 { display:grid; grid-template-columns:minmax(0,1.55fr) minmax(300px,.9fr); gap:14px; margin-bottom:14px; }
+    .grid-even { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:14px; margin-bottom:14px; }
+    .panel { min-width:0; border:1px solid var(--line); border-radius:18px; background:rgba(255,255,255,.95); box-shadow:0 10px 30px rgba(31,54,82,.055); overflow:hidden; }
+    .panel-head { min-height:52px; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:0 17px; border-bottom:1px solid #edf1f6; }
+    .panel-head h3 { margin:0; font-size:15px; }
+    .panel-head small { color:var(--muted); }
+    .panel-body { padding:16px 17px; }
+    .risk-chart { display:grid; grid-template-columns:180px minmax(0,1fr); gap:18px; align-items:center; min-height:185px; }
+    .donut { width:158px; height:158px; margin:auto; border-radius:50%; display:grid; place-items:center; background:conic-gradient(var(--red) 0 12%, #f29a57 12% 34%, var(--amber) 34% 60%, var(--blue) 60% 79%, var(--green) 79%); position:relative; }
+    .donut::after { content:""; width:106px; height:106px; background:white; border-radius:50%; position:absolute; }
+    .donut-label { position:relative; z-index:1; text-align:center; }
+    .donut-label strong { display:block; font-size:25px; }
+    .donut-label span { color:var(--muted); font-size:11px; }
+    .legend { display:grid; gap:10px; }
+    .legend-row { display:grid; grid-template-columns:10px 1fr auto; align-items:center; gap:8px; }
+    .legend-row i { width:9px; height:9px; border-radius:3px; }
+    .legend-row span { color:#536174; }
+    .legend-row strong { font-size:12px; }
+    .run-list { display:grid; gap:12px; }
+    .run-item { display:grid; grid-template-columns:38px minmax(0,1fr) auto; gap:11px; align-items:center; }
+    .run-icon { width:38px; height:38px; display:grid; place-items:center; border-radius:12px; background:var(--blue-soft); color:var(--blue); font-weight:800; }
+    .run-main { min-width:0; }
+    .run-main strong { display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-size:12px; }
+    .run-meta { display:flex; gap:7px; color:var(--muted); font-size:10.5px; margin-top:5px; }
+    .progress { height:6px; margin-top:7px; background:#edf2f7; border-radius:8px; overflow:hidden; }
+    .progress i { display:block; height:100%; border-radius:8px; background:linear-gradient(90deg,var(--blue),#64b9ff); }
+    .progress.green i { background:linear-gradient(90deg,var(--green),#67d6ae); }
+    .progress.amber i { background:linear-gradient(90deg,var(--amber),#f5c672); }
+    .status { display:inline-flex; align-items:center; gap:5px; height:23px; padding:0 9px; border-radius:12px; font-size:10.5px; font-weight:650; white-space:nowrap; }
+    .status::before { content:""; width:6px; height:6px; border-radius:50%; background:currentColor; }
+    .status.running, .status.info { color:#147cd8; background:var(--blue-soft); }
+    .status.success, .status.explained { color:#198d64; background:var(--green-soft); }
+    .status.warning, .status.pending { color:#b97815; background:var(--amber-soft); }
+    .status.danger, .status.high { color:#d65353; background:var(--red-soft); }
+    .status.neutral { color:#718095; background:#f0f3f7; }
+    .toolbar { min-height:56px; display:flex; align-items:center; justify-content:space-between; gap:12px; padding:10px 13px; border:1px solid var(--line); border-bottom:0; border-radius:16px 16px 0 0; background:rgba(255,255,255,.92); }
+    .toolbar-side { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+    .search { min-width:240px; height:35px; display:flex; align-items:center; gap:8px; padding:0 11px; border:1px solid var(--line-strong); border-radius:10px; background:white; }
+    .search svg { width:16px; height:16px; stroke:#8c9aad; fill:none; stroke-width:1.9; }
+    .search input { min-width:0; flex:1; border:0; outline:0; background:transparent; font-size:12px; }
+    .select { height:35px; border:1px solid var(--line-strong); border-radius:10px; background:white; padding:0 29px 0 10px; outline:none; font-size:12px; }
+    .table-wrap { overflow:auto; border:1px solid var(--line); border-radius:0 0 16px 16px; background:white; }
+    .data-table { width:100%; border-collapse:separate; border-spacing:0; min-width:870px; }
+    .data-table th { position:sticky; top:0; z-index:1; height:42px; padding:0 13px; color:#758399; background:#f7f9fc; border-bottom:1px solid var(--line); text-align:left; font-size:11px; font-weight:650; white-space:nowrap; }
+    .data-table td { height:54px; padding:8px 13px; border-bottom:1px solid #eef2f6; color:#3c495c; vertical-align:middle; }
+    .data-table tr:last-child td { border-bottom:0; }
+    .data-table tbody tr { transition:.12s; }
+    .data-table tbody tr:hover { background:#f8fbff; }
+    .link { border:0; padding:0; color:#157cda; background:transparent; font-weight:650; text-align:left; }
+    .subtext { display:block; margin-top:4px; color:#8995a6; font-size:10.5px; font-weight:400; }
+    .risk { display:inline-flex; align-items:center; height:22px; padding:0 8px; border-radius:7px; font-size:10.5px; font-weight:700; }
+    .risk.critical { background:#981f34; color:white; }
+    .risk.high { background:var(--red-soft); color:#d65252; }
+    .risk.medium { background:var(--amber-soft); color:#b97918; }
+    .risk.low { background:var(--blue-soft); color:#2878c8; }
+    .risk.none { background:var(--green-soft); color:#1b8b66; }
+    .row-actions { display:flex; gap:5px; }
+    .mini-btn { width:30px; height:30px; border:1px solid var(--line); border-radius:9px; display:grid; place-items:center; background:white; color:#6e7d90; }
+    .mini-btn:hover { color:var(--blue); border-color:#c8e3ff; }
+    .mini-btn svg { width:15px; height:15px; stroke:currentColor; fill:none; stroke-width:1.8; }
+    .cards { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:13px; }
+    .entity-card { border:1px solid var(--line); border-radius:17px; background:white; overflow:hidden; transition:.16s; }
+    .entity-card:hover { transform:translateY(-2px); box-shadow:0 12px 30px rgba(29,58,91,.09); }
+    .card-visual { height:96px; position:relative; overflow:hidden; background:linear-gradient(135deg,#eef8ff,#f8fbff 48%,#e9faf4); }
+    .card-visual::before, .card-visual::after { content:""; position:absolute; border-radius:22px; border:1px solid rgba(72,147,222,.2); background:rgba(255,255,255,.67); }
+    .card-visual::before { width:145px; height:56px; left:22px; top:20px; transform:rotate(-3deg); }
+    .card-visual::after { width:78px; height:78px; right:26px; top:9px; background:rgba(126,211,198,.24); }
+    .visual-formula { position:absolute; z-index:1; left:42px; top:38px; color:#2388ea; font-size:19px; font-weight:800; letter-spacing:.5px; }
+    .entity-body { padding:14px 15px; }
+    .entity-body h3 { margin:0 0 6px; font-size:14px; }
+    .entity-body p { margin:0; color:var(--muted); line-height:1.6; min-height:41px; font-size:11.5px; }
+    .entity-meta { display:flex; justify-content:space-between; gap:8px; align-items:center; margin-top:12px; padding-top:11px; border-top:1px solid #eef2f6; color:#8290a2; font-size:10.5px; }
+    .pipeline { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:0; padding:18px 14px 11px; }
+    .pipe-step { text-align:center; position:relative; min-width:0; }
+    .pipe-step::after { content:""; height:2px; position:absolute; left:58%; right:-42%; top:15px; background:#dce5ee; }
+    .pipe-step:last-child::after { display:none; }
+    .pipe-dot { width:30px; height:30px; margin:0 auto 8px; display:grid; place-items:center; border-radius:50%; background:#edf2f7; color:#8e9aac; font-size:11px; font-weight:800; position:relative; z-index:1; }
+    .pipe-step.done .pipe-dot { background:var(--green); color:white; }
+    .pipe-step.done::after { background:var(--green); }
+    .pipe-step.active .pipe-dot { background:var(--blue); color:white; box-shadow:0 0 0 5px rgba(22,136,255,.13); }
+    .pipe-step span { display:block; color:#748298; font-size:10px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .detail-grid { display:grid; grid-template-columns:minmax(0,1.35fr) minmax(300px,.65fr); gap:14px; }
+    .info-list { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 24px; }
+    .info-row { min-height:43px; display:grid; grid-template-columns:90px 1fr; gap:9px; align-items:center; border-bottom:1px dashed #e7edf4; }
+    .info-row span { color:var(--muted); font-size:11px; }
+    .info-row strong { font-size:11.5px; font-weight:600; overflow-wrap:anywhere; }
+    .alert { display:flex; gap:11px; align-items:flex-start; padding:12px 14px; border:1px solid #f3d9ab; border-radius:13px; background:var(--amber-soft); color:#8a6425; line-height:1.55; }
+    .alert.red { border-color:#f2cccc; background:var(--red-soft); color:#a84b4b; }
+    .alert.blue { border-color:#d6eaff; background:var(--blue-soft); color:#2c70b2; }
+    .formula { padding:14px 17px; border-radius:13px; background:linear-gradient(135deg,#edf7ff,#f8fbff); border:1px solid #d6e9fa; color:#167bd4; font:700 17px/1.4 Consolas,monospace; text-align:center; }
+    .review-layout { display:grid; grid-template-columns:minmax(0,1.15fr) minmax(330px,.7fr); gap:14px; }
+    .compare-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:10px; }
+    .sheet-card { border:1px solid var(--line); border-radius:13px; overflow:hidden; }
+    .sheet-head { padding:9px 11px; background:#f6f9fc; border-bottom:1px solid var(--line); font-size:10.5px; color:#627188; }
+    .mini-sheet { width:100%; border-collapse:collapse; font-family:Consolas,monospace; font-size:10.5px; }
+    .mini-sheet th, .mini-sheet td { height:28px; padding:0 8px; border-right:1px solid #edf1f5; border-bottom:1px solid #edf1f5; text-align:right; }
+    .mini-sheet th { color:#7a8799; background:#fbfcfe; }
+    .mini-sheet .hot { color:#bf4747; background:#fff0f0; font-weight:700; }
+    .chart-box { margin-top:12px; border:1px solid var(--line); border-radius:13px; padding:11px; background:#fbfdff; }
+    .chart-box svg { width:100%; height:150px; display:block; }
+    .check-list { display:grid; gap:8px; }
+    .check-item { display:grid; grid-template-columns:20px minmax(0,1fr) auto; gap:9px; align-items:start; padding:10px 11px; border:1px solid var(--line); border-radius:11px; background:white; }
+    .check-item input { margin:2px 0 0; accent-color:var(--blue); }
+    .check-item span { line-height:1.45; color:#4e5b6d; }
+    .check-item small { color:var(--muted); }
+    .timeline { display:grid; gap:0; }
+    .timeline-item { display:grid; grid-template-columns:18px 1fr; gap:10px; padding-bottom:15px; }
+    .timeline-marker { position:relative; }
+    .timeline-marker::before { content:""; position:absolute; top:6px; left:5px; width:8px; height:8px; border-radius:50%; background:var(--blue); }
+    .timeline-marker::after { content:""; position:absolute; top:17px; bottom:-11px; left:8px; width:1px; background:#dce5ee; }
+    .timeline-item:last-child .timeline-marker::after { display:none; }
+    .timeline-item strong { display:block; font-size:11.5px; }
+    .timeline-item p { margin:4px 0 0; color:var(--muted); font-size:10.5px; line-height:1.55; }
+    .kpi-bar { display:flex; align-items:center; gap:9px; }
+    .kpi-bar .track { width:92px; height:7px; border-radius:7px; background:#edf2f6; overflow:hidden; }
+    .kpi-bar .track i { display:block; height:100%; border-radius:7px; background:var(--blue); }
+    .empty { padding:60px 20px; text-align:center; color:var(--muted); }
+    .modal-layer { position:fixed; inset:0; z-index:50; display:none; place-items:center; padding:20px; background:rgba(18,31,49,.34); backdrop-filter:blur(8px); }
+    .modal-layer.open { display:grid; }
+    .modal { width:min(720px,calc(100vw - 34px)); max-height:90vh; overflow:auto; border:1px solid rgba(255,255,255,.9); border-radius:21px; background:white; box-shadow:0 28px 80px rgba(18,35,58,.26); }
+    .modal-head { display:flex; align-items:center; justify-content:space-between; gap:15px; padding:18px 20px; border-bottom:1px solid var(--line); }
+    .modal-head h3 { margin:0; font-size:18px; }
+    .modal-body { padding:20px; }
+    .modal-foot { display:flex; align-items:center; justify-content:space-between; gap:12px; padding:14px 20px; border-top:1px solid var(--line); background:#fafbfd; border-radius:0 0 21px 21px; }
+    .workflow-modal { width:min(820px,calc(100vw - 34px)); }
+    .form-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:0 14px; }
+    .form-grid .span-2 { grid-column:1/-1; }
+    .workflow-note { padding:11px 13px; border:1px solid #d8eaff; border-radius:11px; color:#34617f; background:#f4faff; line-height:1.55; }
+    .log-view { max-height:340px; overflow:auto; margin:0; padding:14px; border-radius:12px; color:#dce9f6; background:#172638; font:11px/1.65 Consolas,monospace; white-space:pre-wrap; }
+    .preview-page { padding:28px 34px; border:1px solid var(--line); border-radius:12px; background:#fff; box-shadow:0 8px 25px rgba(33,53,77,.07); }
+    .preview-page h2 { margin:0 0 6px; text-align:center; font-size:19px; }
+    .preview-page h3 { margin:20px 0 8px; font-size:13px; }
+    .preview-page p { color:#566579; line-height:1.75; }
+    .wizard-steps { display:grid; grid-template-columns:repeat(3,1fr); margin-bottom:20px; }
+    .wizard-step { display:flex; align-items:center; gap:8px; color:#9aa6b6; position:relative; }
+    .wizard-step::after { content:""; position:absolute; left:36px; right:10px; top:14px; height:1px; background:#dce4ed; }
+    .wizard-step:last-child::after { display:none; }
+    .wizard-step i { width:28px; height:28px; display:grid; place-items:center; border-radius:50%; background:#eef2f6; font-style:normal; position:relative; z-index:1; }
+    .wizard-step.active, .wizard-step.done { color:var(--blue); }
+    .wizard-step.active i { color:white; background:var(--blue); box-shadow:0 0 0 4px rgba(22,136,255,.12); }
+    .wizard-step.done i { color:white; background:var(--green); }
+    .source-options { display:grid; grid-template-columns:repeat(3,1fr); gap:11px; }
+    .source-option { min-height:118px; padding:14px; border:1px solid var(--line); border-radius:14px; background:#fbfcfe; text-align:left; }
+    .source-option:hover, .source-option.selected { border-color:#9dceff; background:#f3f9ff; box-shadow:0 0 0 3px rgba(22,136,255,.08); }
+    .source-option b { display:block; margin:11px 0 5px; }
+    .source-option small { color:var(--muted); line-height:1.45; }
+    .source-icon { width:34px; height:34px; display:grid; place-items:center; border-radius:11px; background:var(--blue-soft); color:var(--blue); font-size:17px; }
+    .field { display:grid; gap:7px; margin-top:15px; }
+    .field label { font-weight:650; font-size:11.5px; }
+    .field input, .field textarea { width:100%; border:1px solid var(--line-strong); border-radius:10px; padding:0 11px; outline:none; background:white; }
+    .field input { height:38px; }
+    .field textarea { min-height:76px; padding-top:10px; resize:vertical; }
+    .field input:focus, .field textarea:focus { border-color:#8dc8ff; box-shadow:0 0 0 3px rgba(22,136,255,.08); }
+    .strategy-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:10px; }
+    .strategy { padding:13px; border:1px solid var(--line); border-radius:13px; }
+    .strategy.selected { border-color:#8fcaff; background:#f2f8ff; }
+    .strategy b { display:block; }
+    .strategy small { display:block; margin-top:5px; color:var(--muted); line-height:1.45; }
+    .summary-list { border:1px solid var(--line); border-radius:13px; overflow:hidden; }
+    .summary-list div { min-height:44px; display:grid; grid-template-columns:135px 1fr; gap:10px; align-items:center; padding:0 13px; border-bottom:1px solid #edf1f5; }
+    .summary-list div:last-child { border-bottom:0; }
+    .summary-list span { color:var(--muted); }
+    .toast-stack { position:fixed; z-index:80; right:26px; top:24px; display:grid; gap:10px; pointer-events:none; }
+    .toast { width:330px; display:grid; grid-template-columns:34px 1fr; gap:10px; align-items:center; padding:12px 14px; border:1px solid #dce8f4; border-radius:14px; background:rgba(255,255,255,.96); box-shadow:0 15px 40px rgba(26,49,78,.17); animation:toastIn .22s ease; }
+    .toast i { width:31px; height:31px; display:grid; place-items:center; border-radius:10px; background:var(--green-soft); color:var(--green); font-style:normal; font-weight:800; }
+    .toast strong { display:block; font-size:11.5px; }
+    .toast small { display:block; margin-top:3px; color:var(--muted); line-height:1.35; }
+    @keyframes toastIn { from { opacity:0; transform:translateY(-8px); } }
+    .popover { position:fixed; z-index:30; width:330px; right:70px; top:72px; display:none; border:1px solid var(--line); border-radius:16px; background:white; box-shadow:0 18px 50px rgba(23,43,70,.18); overflow:hidden; }
+    .popover.open { display:block; }
+    .pop-head { display:flex; justify-content:space-between; padding:13px 15px; border-bottom:1px solid var(--line); }
+    .notice { padding:12px 15px; border-bottom:1px solid #edf1f5; }
+    .notice:last-child { border:0; }
+    .notice strong { display:block; font-size:11.5px; }
+    .notice p { margin:4px 0 0; color:var(--muted); font-size:10.5px; line-height:1.45; }
+    .mobile-menu { display:none; }
+    @media (max-width:1100px) {
+      .app-shell { grid-template-columns:210px minmax(0,1fr); }
+      .stats { grid-template-columns:repeat(3,1fr); }
+      .cards { grid-template-columns:repeat(2,1fr); }
+      .grid-2, .detail-grid, .review-layout { grid-template-columns:1fr; }
+      .console-select { min-width:130px; }
+    }
+    @media (max-width:780px) {
+      body { overflow:auto; }
+      .app-shell { width:100%; min-height:100vh; height:auto; margin:0; border-radius:0; grid-template-columns:1fr; }
+      .sidebar { position:fixed; z-index:40; inset:0 auto 0 0; width:248px; transform:translateX(-102%); transition:.2s; box-shadow:20px 0 50px rgba(20,38,62,.2); }
+      .sidebar.open { transform:none; }
+      .main { min-height:100vh; grid-template-rows:62px auto; }
+      .content { overflow:visible; padding:15px; }
+      .mobile-menu { display:grid; }
+      .console-select { display:none; }
+      .stats { grid-template-columns:repeat(2,1fr); }
+      .cards, .grid-even { grid-template-columns:1fr; }
+      .toolbar { align-items:stretch; flex-direction:column; }
+      .search { min-width:0; width:100%; }
+      .source-options, .strategy-grid { grid-template-columns:1fr; }
+      .compare-grid { grid-template-columns:1fr; }
+      .form-grid { grid-template-columns:1fr; }
+      .form-grid .span-2 { grid-column:auto; }
+      .pipeline { grid-template-columns:repeat(4,1fr); row-gap:16px; }
+      .pipe-step:nth-child(4)::after { display:none; }
+    }
+  </style>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <div>
+        <div class="traffic" aria-hidden="true"><i></i><i></i><i></i></div>
+        <div class="brand">
+          <div class="brand-mark"><b>鉴</b></div>
+          <div><strong>慧研鉴证</strong><small>科研数据异常筛查 Agent</small></div>
+        </div>
+      </div>
+      <div></div>
+      <nav class="nav-wrap" id="nav"></nav>
+      <div class="side-footer">
+        <div class="console-chip"><i class="dot"></i><span><b id="consoleName">审查工作台</b><small>服务正常 · 规则包 2.4.1</small></span></div>
+      </div>
+    </aside>
+    <main class="main">
+      <header class="topbar">
+        <button class="icon-btn mobile-menu" data-action="mobileMenu" aria-label="打开菜单"></button>
+        <div class="page-title"><h1 id="topTitle">工作台</h1><p id="topSubtitle">科研数据异常筛查全局态势与待办</p></div>
+        <select class="console-select" id="consoleSelect" aria-label="切换控制台">
+          <option value="front">审查工作台</option>
+          <option value="tooling">检测与工具中台</option>
+          <option value="operations">任务与数据中台</option>
+          <option value="admin">管理后台</option>
+        </select>
+        <button class="icon-btn" data-action="notifications" aria-label="通知"><span class="notify-dot"></span></button>
+        <div class="avatar" title="审查员 · 林知行">林</div>
+      </header>
+      <section class="content" id="content"></section>
+    </main>
+  </div>
+
+  <div class="modal-layer" id="scanModal" role="dialog" aria-modal="true" aria-labelledby="scanModalTitle">
+    <div class="modal">
+      <div class="modal-head"><div><h3 id="scanModalTitle">新建论文筛查</h3><small style="color:var(--muted)">创建可复现的材料快照与扫描任务</small></div><button class="icon-btn" data-action="closeModal" aria-label="关闭"></button></div>
+      <div class="modal-body" id="wizardBody"></div>
+      <div class="modal-foot"><button class="btn" id="wizardPrev" data-action="wizardPrev">上一步</button><div class="actions"><button class="btn" data-action="closeModal">取消</button><button class="btn primary" id="wizardNext" data-action="wizardNext">下一步</button></div></div>
+    </div>
+  </div>
+
+  <div class="modal-layer" id="workflowModal" role="dialog" aria-modal="true" aria-labelledby="workflowTitle">
+    <div class="modal workflow-modal">
+      <div class="modal-head"><div><h3 id="workflowTitle">业务操作</h3><small id="workflowSubtitle" style="color:var(--muted)">按建设蓝图完成操作并记录审计信息</small></div><button class="icon-btn" data-action="closeWorkflow" aria-label="关闭"></button></div>
+      <div class="modal-body" id="workflowBody"></div>
+      <div class="modal-foot" id="workflowFoot"><button class="btn" data-action="closeWorkflow">取消</button><button class="btn primary" data-action="submitWorkflow">确认</button></div>
+    </div>
+  </div>
+
+  <div class="popover" id="noticePopover">
+    <div class="pop-head"><strong>通知中心</strong><button class="link" data-action="readAll">全部已读</button></div>
+    <div class="notice"><strong>任务 PA-20260918-006 已完成</strong><p>共扫描 636 个数据块，生成 17 条待复核线索。</p></div>
+    <div class="notice"><strong>2 个文件解析失败</strong><p>项目“肿瘤代谢多组学研究”需要重新选择解析器。</p></div>
+    <div class="notice"><strong>报告等待签名</strong><p>报告 RP-20260917-003 已完成复核，可进入封存流程。</p></div>
+  </div>
+  <div class="toast-stack" id="toastStack"></div>
+
+  <script>
+    const icons = {
+      menu:'<svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg>',
+      home:'<svg viewBox="0 0 24 24"><path d="M4 11.5 12 5l8 6.5"/><path d="M6.5 10.5V19h11v-8.5M10 19v-5h4v5"/></svg>',
+      folder:'<svg viewBox="0 0 24 24"><path d="M4 7h6l2 2h8v9H4z"/></svg>',
+      play:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><path d="m10 9 5 3-5 3z"/></svg>',
+      alert:'<svg viewBox="0 0 24 24"><path d="M12 4 3.5 19h17z"/><path d="M12 9v4M12 16.5h.01"/></svg>',
+      evidence:'<svg viewBox="0 0 24 24"><path d="M7 4h8l3 3v13H7z"/><path d="M15 4v4h4M10 12h5M10 15h5"/></svg>',
+      report:'<svg viewBox="0 0 24 24"><rect x="5" y="4" width="14" height="16" rx="2"/><path d="M9 9h6M9 13h6M9 17h4"/></svg>',
+      database:'<svg viewBox="0 0 24 24"><ellipse cx="12" cy="6" rx="7" ry="3"/><path d="M5 6v6c0 1.7 3.1 3 7 3s7-1.3 7-3V6M5 12v6c0 1.7 3.1 3 7 3s7-1.3 7-3v-6"/></svg>',
+      rules:'<svg viewBox="0 0 24 24"><path d="M5 5h14M5 12h14M5 19h14"/><circle cx="9" cy="5" r="2"/><circle cx="15" cy="12" r="2"/><circle cx="11" cy="19" r="2"/></svg>',
+      settings:'<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19 12a7 7 0 0 0-.1-1l2-1.5-2-3.4-2.4 1a7 7 0 0 0-1.7-1L14.5 3h-5l-.4 3.1a7 7 0 0 0-1.7 1l-2.4-1-2 3.4L5.1 11a7 7 0 0 0 0 2L3 14.5l2 3.4 2.4-1a7 7 0 0 0 1.7 1l.4 3.1h5l.4-3.1a7 7 0 0 0 1.7-1l2.4 1 2-3.4-2.1-1.5a7 7 0 0 0 .1-1Z"/></svg>',
+      search:'<svg viewBox="0 0 24 24"><circle cx="10.8" cy="10.8" r="6"/><path d="m15.2 15.2 4.3 4.3"/></svg>',
+      plus:'<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>',
+      download:'<svg viewBox="0 0 24 24"><path d="M12 4v11m-4-4 4 4 4-4M5 19h14"/></svg>',
+      eye:'<svg viewBox="0 0 24 24"><path d="M3 12s3.2-5 9-5 9 5 9 5-3.2 5-9 5-9-5-9-5Z"/><circle cx="12" cy="12" r="2.5"/></svg>',
+      more:'<svg viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></svg>',
+      bell:'<svg viewBox="0 0 24 24"><path d="M6 9a6 6 0 0 1 12 0v5l2 3H4l2-3zM10 20h4"/></svg>',
+      check:'<svg viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/></svg>',
+      close:'<svg viewBox="0 0 24 24"><path d="m6 6 12 12M18 6 6 18"/></svg>',
+      tool:'<svg viewBox="0 0 24 24"><path d="m14 6 4-2 2 2-2 4-3 1-7 7-3-3 7-7z"/></svg>',
+      bot:'<svg viewBox="0 0 24 24"><rect x="5" y="7" width="14" height="11" rx="4"/><path d="M12 7V4M9 12h.01M15 12h.01M8 21h8"/></svg>',
+      users:'<svg viewBox="0 0 24 24"><circle cx="9" cy="8" r="3"/><circle cx="17" cy="9" r="2.5"/><path d="M3.5 19a5.5 5.5 0 0 1 11 0M14 18a4 4 0 0 1 7 0"/></svg>',
+      shield:'<svg viewBox="0 0 24 24"><path d="M12 3 19 6v5c0 4.6-2.8 8-7 10-4.2-2-7-5.4-7-10V6z"/><path d="m9 12 2 2 4-4"/></svg>',
+      server:'<svg viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="6" rx="2"/><rect x="4" y="14" width="16" height="6" rx="2"/><path d="M8 7h.01M8 17h.01"/></svg>',
+      log:'<svg viewBox="0 0 24 24"><path d="M6 4h10l3 3v13H6zM16 4v4h4M9 12h7M9 16h5"/></svg>',
+      chevron:'<svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg>'
+    };
+    const icon = name => icons[name] || icons.folder;
+
+    const consoles = {
+      front: {
+        name:'审查工作台',
+        routes:[
+          ['workspace','home','工作台',''],['projects','folder','项目中心','8'],['runs','play','任务中心','3'],
+          ['findings','alert','异常线索','17'],['review','evidence','证据复核','6'],['reports','report','报告中心',''],
+          ['assets','database','数据资产',''],['rules','rules','规则库',''],['settings','settings','设置','']
+        ]
+      },
+      tooling: {
+        name:'检测与工具中台',
+        routes:[
+          ['tooling-home','home','中台首页',''],['parsers','database','解析器库',''],['detectors','tool','检测器库','12'],
+          ['rule-admin','rules','规则包管理',''],['skills','evidence','Skill 库',''],['agents','bot','Agent 库',''],
+          ['testing','shield','测试与发布',''],['tool-settings','settings','设置','']
+        ]
+      },
+      operations: {
+        name:'任务与数据中台',
+        routes:[
+          ['ops-home','home','运维首页',''],['ingestion','download','接入管理',''],['parsing','database','解析管理','2'],
+          ['scheduling','play','任务调度','3'],['coverage','evidence','覆盖管理',''],['data-assets','database','数据资产',''],
+          ['resources','server','资源与配额',''],['ops-settings','settings','设置','']
+        ]
+      },
+      admin: {
+        name:'管理后台',
+        routes:[
+          ['admin-home','home','管理首页',''],['users','users','用户与组织',''],['roles','shield','角色与权限',''],
+          ['audit','log','审核与审计','5'],['brand','folder','页面与品牌',''],['global-policy','rules','全局策略',''],
+          ['admin-settings','settings','系统设置','']
+        ]
+      }
+    };
+
+    const routeMeta = {
+      workspace:['工作台','科研数据异常筛查全局态势与待办'], projects:['项目中心','统一管理论文、材料快照、任务、线索与报告'], 'project-detail':['项目详情','论文元数据、材料覆盖、任务、线索与报告全景'],
+      runs:['任务中心','跟踪材料获取、解析、扫描、复核与报告阶段'], findings:['异常线索','按风险与证据强度筛选需要人工关注的数值关系'],
+      review:['证据复核','原表、计算证据、语义挑战与人工裁定一体化工作区'], 'finding-detail':['证据复核','原表、计算证据、语义挑战与人工裁定一体化工作区'], reports:['报告中心','生成、审阅、签名、封存并导出可复现报告'],
+      assets:['数据资产','追踪原始材料、结构化数据块与证据产物'], rules:['规则库','查看确定性检测规则、版本、适用范围与误报说明'],
+      settings:['个人设置','通知、安全与默认扫描策略'],
+      'tooling-home':['检测中台','检测能力、版本与发布状态总览'], parsers:['解析器库','管理多格式解析器与失败策略'], detectors:['检测器库','管理确定性 Python/R 检测器'],
+      'rule-admin':['规则包管理','配置阈值、风险评分、版本与灰度发布'], skills:['Skill 库','编排材料、检测、复核与报告能力'], agents:['Agent 库','管理语义理解、复核与成文 Agent'],
+      testing:['测试与发布','基准集、回归、性能与镜像发布门禁'],
+      'ops-home':['任务数据中台','接入、解析、调度、覆盖与资源态势'], ingestion:['接入管理','材料来源、授权、哈希、缺失与重复治理'],
+      parsing:['解析管理','文件解析状态、数据块产出与错误诊断'], scheduling:['任务调度','队列、节点、预算、心跳与恢复动作'],
+      coverage:['覆盖管理','已解析、已扫描、跳过、截断与未覆盖区域'], 'data-assets':['数据资产','原始层到报告层的生命周期与完整性'], resources:['资源与配额','节点、存储、并发、计算时长与用户配额'],
+      'admin-home':['管理首页','用户、项目、任务、风险与服务状态'], users:['用户与组织','用户画像、组织、数据域与项目范围'], roles:['角色与权限','菜单、操作、数据与敏感导出权限'],
+      audit:['审核与审计','高风险裁定、报告封存与关键操作留痕'], brand:['页面与品牌','Logo、名称、主题、登录页与通知模板'],
+      'global-policy':['全局策略','默认规则包、模型白名单、存储与告警策略'],
+      'tool-settings':['中台设置','检测工具中台运行参数'], 'ops-settings':['运维设置','任务数据中台运行参数'], 'admin-settings':['系统设置','域名、对象存储、队列、模型服务与备份']
+    };
+
+    const projects = [
+      {id:'PA-20260918-006',title:'Human HDAC6 senses valine abundancy to regulate DNA damage',doi:'10.1038/s41586-024-08248-5',journal:'Nature',assets:14,blocks:636,findings:17,risk:'严重',status:'待复核',updated:'今天 09:42'},
+      {id:'PA-20260917-014',title:'肿瘤代谢多组学标志物研究',doi:'10.1016/j.cell.2025.04.018',journal:'Cell',assets:22,blocks:418,findings:9,risk:'高',status:'运行中',updated:'今天 09:18'},
+      {id:'PA-20260916-021',title:'免疫微环境单细胞图谱补充数据复核',doi:'10.1126/science.adk7812',journal:'Science',assets:31,blocks:902,findings:6,risk:'中',status:'已完成',updated:'昨天 18:26'},
+      {id:'PA-20260914-008',title:'心血管队列基线数据一致性筛查',doi:'内部稿件 · CV-2026-09',journal:'内部项目',assets:11,blocks:284,findings:3,risk:'低',status:'已完成',updated:'09-16 16:03'},
+      {id:'PA-20260912-019',title:'神经退行性疾病长期随访数据核验',doi:'10.1001/jama.2025.11827',journal:'JAMA',assets:18,blocks:511,findings:0,risk:'无',status:'部分完成',updated:'09-15 10:11'}
+    ];
+    const findings = [
+      {id:'FD-0041',risk:'严重',rule:'固定平移',where:'Source Data Fig.4 · shHDAC6',relation:'VR 24 h = VR 0 h + 0.300',hits:'35 / 35',project:'Human HDAC6…',status:'待人工'},
+      {id:'FD-0047',risk:'高',rule:'完全相同',where:'ED Fig.6c ↔ ED Fig.6m',relation:'HCT116 = MEF（逐项相同）',hits:'35 / 35',project:'Human HDAC6…',status:'待人工'},
+      {id:'FD-0038',risk:'高',rule:'固定平移',where:'Fig.4c ↔ ED Fig.6c',relation:'B = A - 0.200',hits:'34 / 35',project:'Human HDAC6…',status:'待复核'},
+      {id:'FD-0052',risk:'中',rule:'统计量自洽',where:'Supplementary Table 3',relation:'SE × √n ≠ SD',hits:'8 组',project:'肿瘤代谢多组学…',status:'待复核'},
+      {id:'FD-0029',risk:'中',rule:'尾数复用',where:'Table S7 · Cohort B',relation:'尾数序列重复率 92%',hits:'48 / 52',project:'心血管队列…',status:'保留观察'},
+      {id:'FD-0017',risk:'低',rule:'完全相同',where:'Table S1 ↔ Figure data',relation:'基因列表完全一致',hits:'126 / 126',project:'单细胞图谱…',status:'已解释'}
+    ];
+
+    const runRows = [
+      {id:'PA-RUN-006-03',project:'Human HDAC6…',stage:'Agent 语义复核',progress:'86%',coverage:'14/14 · 636块',elapsed:'2h 18m',status:'运行中'},
+      {id:'PA-RUN-014-02',project:'肿瘤代谢多组学…',stage:'确定性规则扫描',progress:'64%',coverage:'20/22 · 418块',elapsed:'1h 46m',status:'运行中'},
+      {id:'PA-RUN-021-01',project:'单细胞图谱…',stage:'报告生成',progress:'96%',coverage:'31/31 · 902块',elapsed:'3h 12m',status:'运行中'},
+      {id:'PA-RUN-019-04',project:'长期随访数据核验',stage:'规则扫描',progress:'72%',coverage:'16/18 · 511块',elapsed:'4h 05m',status:'部分完成'},
+      {id:'PA-RUN-008-01',project:'心血管队列…',stage:'已归档',progress:'100%',coverage:'11/11 · 284块',elapsed:'54m',status:'已完成'}
+    ];
+    const reportRows = [
+      {id:'RP-20260918-006',project:'Human HDAC6…',version:'v1.3',summary:'严重 1 · 高 2 · 中 3',status:'待签名',updated:'今天 10:06'},
+      {id:'RP-20260917-014',project:'肿瘤代谢多组学…',version:'v0.8',summary:'高 2 · 中 4',status:'草稿',updated:'今天 09:32'},
+      {id:'RP-20260916-021',project:'单细胞图谱…',version:'v1.0',summary:'中 1 · 低 2 · 已解释 3',status:'已封存',updated:'昨天 19:04'},
+      {id:'RP-20260914-008',project:'心血管队列…',version:'v1.0',summary:'低 1 · 已解释 2',status:'已封存',updated:'09-16 17:21'}
+    ];
+
+    let state = {
+      console:'front', route:'workspace', wizard:1, source:'doi', strategy:'standard', reviewStatus:'待人工', search:'',
+      workflow:null, selectedId:'', selectedProjectId:'PA-20260918-006', selectedFindingId:'FD-0041', auditTrail:[], projectMaterials:14,
+      settings:{rulePack:'PaperAudit Standard 2.4.1',notice:'站内 + 邮件',reportFormat:'Word + PDF + HTML'},
+      created:{rules:[],detectors:[],parsers:[],skills:[],agents:[],testing:[],users:[],roles:[],audit:[],brand:[],'global-policy':[],nodes:[]}
+    };
+    const content = document.getElementById('content');
+    const nav = document.getElementById('nav');
+    const byId = id => document.getElementById(id);
+    const riskClass = v => ({'严重':'critical','高':'high','中':'medium','低':'low','无':'none'})[v] || 'low';
+    const statusClass = v => v.includes('完成')||v.includes('成功')||v.includes('已解释')?'success':v.includes('运行')?'running':v.includes('失败')||v.includes('人工')?'danger':v.includes('部分')||v.includes('待')?'warning':'neutral';
+    const routeButton = (route,label,sub='',id='') => `<button class="link" data-route="${route}"${id?` data-id="${id}"`:''}>${label}${sub?`<span class="subtext">${sub}</span>`:''}</button>`;
+    const status = v => `<span class="status ${statusClass(v)}">${v}</span>`;
+    const risk = v => `<span class="risk ${riskClass(v)}">${v}</span>`;
+    const actionBtn = (action,label,ic='eye',id='') => `<button class="mini-btn" data-action="${action}"${id?` data-id="${id}"`:''} title="${label}" aria-label="${label}">${icon(ic)}</button>`;
+    const escapeHtml = value => String(value??'').replace(/[&<>"']/g,ch=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch]));
+    const STORAGE_KEY='paperaudit-blueprint-ui-v2';
+    function persist(){if(typeof localStorage==='undefined')return;try{localStorage.setItem(STORAGE_KEY,JSON.stringify({state,runRows,reportRows,findings}));}catch(_){}}
+    function hydrate(){if(typeof localStorage==='undefined')return;try{const saved=JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');if(!saved)return;const createdDefaults=state.created;Object.assign(state,saved.state||{});state.created={...createdDefaults,...(saved.state?.created||{})};if(Array.isArray(saved.runRows))runRows.splice(0,runRows.length,...saved.runRows);if(Array.isArray(saved.reportRows))reportRows.splice(0,reportRows.length,...saved.reportRows);if(Array.isArray(saved.findings))findings.splice(0,findings.length,...saved.findings);}catch(_){}}
+    hydrate();
+
+    function setRoute(route, push=true) {
+      state.route = route;
+      const consoleEntry = Object.entries(consoles).find(([,c]) => c.routes.some(r => r[0]===route));
+      if (consoleEntry) state.console = consoleEntry[0];
+      if (push) history.replaceState(null,'','#'+route);
+      render();
+      content.scrollTop = 0;
+      byId('sidebar').classList.remove('open');
+    }
+
+    function renderNav() {
+      const cfg = consoles[state.console];
+      const splitAt = Math.max(1,cfg.routes.length-1);
+      nav.innerHTML = `<div class="nav-group-title">${state.console==='front'?'研究审查':'平台治理'}</div>` + cfg.routes.map((r,i) => `${i===splitAt?'<div class="nav-group-title">系统</div>':''}<button class="nav-item ${state.route===r[0]?'active':''}" data-route="${r[0]}">${icon(r[1])}<span>${r[2]}</span>${r[3]?`<span class="count">${r[3]}</span>`:''}</button>`).join('');
+      byId('consoleName').textContent = cfg.name;
+      byId('consoleSelect').value = state.console;
+    }
+
+    function render() {
+      renderNav();
+      const meta = routeMeta[state.route] || ['页面',''];
+      byId('topTitle').textContent = meta[0];
+      byId('topSubtitle').textContent = meta[1];
+      content.innerHTML = renderPage(state.route);
+      bindSearch();
+      persist();
+    }
+
+    function pageHead(title,desc,actions='') { return `<div class="page-head"><div><h2>${title}</h2><p>${desc}</p></div><div class="actions">${actions}</div></div>`; }
+    function statCard(label,value,note,tone='blue',delta='') { return `<article class="stat-card"><div class="stat-top"><span>${label}</span><i class="stat-icon ${tone}">${icon(tone==='red'?'alert':tone==='green'?'check':tone==='amber'?'play':'folder')}</i></div><div class="stat-value"><strong>${value}</strong>${delta?`<small>${delta}</small>`:''}</div><small>${note}</small></article>`; }
+    function toolbar(placeholder='搜索名称、编号或 DOI', extra='') { return `<div class="toolbar"><div class="toolbar-side"><label class="search">${icon('search')}<input data-table-search placeholder="${placeholder}" /></label>${extra}</div><div class="toolbar-side"><button class="btn" data-action="export">${icon('download')}导出</button></div></div>`; }
+
+    function renderPage(route) {
+      if (route==='workspace') return dashboard();
+      if (route==='projects') return projectList();
+      if (route==='project-detail') return projectDetail();
+      if (route==='runs') return runList();
+      if (route==='findings') return findingList();
+      if (route==='review'||route==='finding-detail') return reviewPage();
+      if (route==='reports') return reportPage();
+      if (route==='assets'||route==='data-assets') return assetsPage();
+      if (route==='rules') return ruleCards(false);
+      if (['tooling-home','ops-home','admin-home'].includes(route)) return managementDashboard(route);
+      if (route==='detectors') return detectorsPage();
+      if (route==='rule-admin') return ruleCards(true);
+      if (route==='parsers'||route==='parsing') return parserPage(route==='parsing');
+      if (route==='scheduling') return runList(true);
+      if (route==='coverage') return coveragePage();
+      if (route==='resources') return resourcesPage();
+      if (route==='ingestion') return ingestionPage();
+      if (route==='skills'||route==='agents'||route==='testing') return capabilityPage(route);
+      if (route==='users'||route==='roles'||route==='audit'||route==='brand'||route==='global-policy') return adminPage(route);
+      return settingsPage(route);
+    }
+
+    function dashboard() {
+      return `${pageHead('审查工作台','聚合项目、任务、线索、覆盖与报告状态，优先处理真正需要人工关注的问题。',`<button class="btn" data-route="projects">${icon('folder')}项目中心</button><button class="btn primary" data-action="openScan">${icon('plus')}新建筛查</button>`)}
+      <div class="stats">${statCard('论文项目','128','本月新增 14 个','blue','+12.3%')}${statCard('运行中任务','3','1 个任务接近预算上限','amber')}${statCard('待复核线索','17','其中高风险 6 条','red','+4')}${statCard('已完成报告','46','本月已封存 9 份','green')}${statCard('材料解析率','96.8%','1,248 / 1,289 个文件','purple','+1.6%')}</div>
+      <div class="grid-2">
+        <section class="panel"><div class="panel-head"><div><h3>线索风险分布</h3><small>当前待处理与保留观察线索</small></div><button class="link" data-route="findings">查看全部 →</button></div><div class="panel-body risk-chart"><div class="donut"><div class="donut-label"><strong>42</strong><span>有效线索</span></div></div><div class="legend"><div class="legend-row"><i style="background:#981f34"></i><span>严重 · 跨实验机械关系</span><strong>5</strong></div><div class="legend-row"><i style="background:#f29a57"></i><span>高风险 · 需优先人工核验</span><strong>9</strong></div><div class="legend-row"><i style="background:var(--amber)"></i><span>中风险 · 语义待补充</span><strong>11</strong></div><div class="legend-row"><i style="background:var(--blue)"></i><span>低风险 · 保留观察</span><strong>8</strong></div><div class="legend-row"><i style="background:var(--green)"></i><span>已解释 · 良性来源明确</span><strong>9</strong></div></div></div></section>
+        <section class="panel"><div class="panel-head"><div><h3>正在运行</h3><small>任务阶段与覆盖进度</small></div><button class="link" data-route="runs">任务中心 →</button></div><div class="panel-body run-list">${runItem('HD','Human HDAC6…','Agent 语义复核 · 14/14 文件','86%',86,'running')}${runItem('MO','肿瘤代谢多组学…','确定性规则扫描 · 418 数据块','64%',64,'amber')}${runItem('SC','单细胞图谱补充数据…','报告生成 · 6 条线索','96%',96,'green')}</div></section>
+      </div>
+      <div class="grid-2">
+        <section class="panel"><div class="panel-head"><div><h3>最近项目</h3><small>按更新时间排序</small></div><button class="link" data-route="projects">全部项目 →</button></div><div class="table-wrap" style="border:0;border-radius:0"><table class="data-table" style="min-width:650px"><thead><tr><th>论文 / 项目</th><th>材料</th><th>线索</th><th>风险</th><th>状态</th></tr></thead><tbody>${projects.slice(0,4).map(x=>`<tr><td>${routeButton('project-detail',x.title,x.doi,x.id)}</td><td>${x.assets} 个</td><td>${x.findings}</td><td>${risk(x.risk)}</td><td>${status(x.status)}</td></tr>`).join('')}</tbody></table></div></section>
+        <section class="panel"><div class="panel-head"><div><h3>覆盖与质量告警</h3><small>不能被“扫描完成”掩盖的边界</small></div></div><div class="panel-body"><div class="alert red"><b>!</b><div><strong>2 个文件解析失败</strong><div>项目 PA-20260917-014：1 个嵌入式对象、1 个扫描版 PDF 需人工处理。</div></div></div><div class="alert" style="margin-top:9px"><b>△</b><div><strong>1 个任务部分完成</strong><div>候选数量达到 2,000 条上限；已报告结果可复现，未覆盖区域不可视为无信号。</div></div></div><div class="alert blue" style="margin-top:9px"><b>i</b><div><strong>3 份报告等待签名</strong><div>完成签名后方可封存并导出完整证据包。</div></div></div></div></section>
+      </div>`;
+    }
+
+    function runItem(code,title,meta,percent,num,tone) { return `<div class="run-item"><div class="run-icon">${code}</div><div class="run-main"><strong>${title}</strong><div class="run-meta"><span>${meta}</span></div><div class="progress ${tone}"><i style="width:${num}%"></i></div></div><b style="font-size:11px">${percent}</b></div>`; }
+
+    function projectList() {
+      return `${pageHead('项目中心','每个项目绑定论文元数据、材料快照、扫描任务、异常线索与报告版本。',`<button class="btn primary" data-action="openScan">${icon('plus')}新建筛查</button>`)}
+      ${toolbar('搜索项目名称、编号或 DOI',`<select class="select" data-table-filter><option>全部状态</option><option>运行中</option><option>待复核</option><option>已完成</option><option>部分完成</option></select><select class="select" data-table-filter><option>全部风险</option><option>严重</option><option>高</option><option>中</option><option>低</option></select>`)}
+      <div class="table-wrap"><table class="data-table" data-filter-table><thead><tr><th>项目 / 论文</th><th>项目编号</th><th>期刊</th><th>材料 / 数据块</th><th>线索</th><th>最高风险</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead><tbody>${projects.map(x=>`<tr><td>${routeButton('project-detail',x.title,x.doi,x.id)}</td><td>${x.id}</td><td>${x.journal}</td><td>${x.assets} / ${x.blocks}</td><td><b>${x.findings}</b></td><td>${risk(x.risk)}</td><td>${status(x.status)}</td><td>${x.updated}</td><td><div class="row-actions">${actionBtn('openProject','打开项目','eye',x.id)}${actionBtn('export','导出','download',x.id)}</div></td></tr>`).join('')}</tbody></table></div>`;
+    }
+
+    function projectDetail() {
+      const p=projects.find(x=>x.id===state.selectedProjectId)||projects[0];
+      const materialCount=p.id===projects[0].id?state.projectMaterials:p.assets;
+      const sheetCount=p.id===projects[0].id?'30 / 30':'按文件解析';
+      return `${pageHead('项目详情',p.title,`<button class="btn" data-route="projects">返回项目</button><button class="btn" data-action="addMaterial">${icon('plus')}补充材料</button><button class="btn primary" data-action="generateReport">${icon('report')}生成报告</button>`)}
+      <section class="panel" style="margin-bottom:14px"><div class="panel-body"><div class="info-list"><div class="info-row"><span>项目编号</span><strong>${p.id}</strong></div><div class="info-row"><span>DOI</span><strong>${p.doi}</strong></div><div class="info-row"><span>期刊 / 年份</span><strong>${p.journal} · ${p.id===projects[0].id?'2024':'2025'}</strong></div><div class="info-row"><span>责任人</span><strong>林知行 · 科研审查组</strong></div><div class="info-row"><span>材料快照</span><strong>v3 · ${materialCount} 个文件 · SHA256 已校验</strong></div><div class="info-row"><span>规则包</span><strong>PaperAudit Standard 2.4.1</strong></div></div></div><div class="pipeline">${['材料获取','完整性校验','结构化解析','规则扫描','语义复核','人工裁定','报告封存'].map((x,i)=>`<div class="pipe-step ${i<4?'done':i===4?'active':''}"><div class="pipe-dot">${i<4?'✓':i+1}</div><span>${x}</span></div>`).join('')}</div></section>
+      <div class="detail-grid"><div><section class="panel" style="margin-bottom:14px"><div class="panel-head"><div><h3>筛查概览</h3><small>项目 ${p.id}</small></div>${status(p.status)}</div><div class="panel-body"><div class="stats" style="grid-template-columns:repeat(4,1fr);margin:0">${statCard('官方文件',`${materialCount} / ${materialCount}`,'全部获取','green')}${statCard('工作表',sheetCount,'解析产物','green')}${statCard('数据块',String(p.blocks),'规则覆盖 96.2%','blue')}${statCard('候选线索',String(p.findings),`最高风险 ${p.risk}`,'red')}</div><div class="alert" style="margin-top:14px"><b>△</b><div><strong>扫描状态：${p.status==='部分完成'||p.id===projects[0].id?'partial（部分完成）':'已完成自动阶段'}</strong><div>已报告关系可复现；任何未覆盖区域都不能解释为不存在其他信号。</div></div></div></div></section>
+      <section class="panel"><div class="panel-head"><div><h3>高优先级线索</h3><small>经过重复编号与共享列表排除后</small></div><button class="link" data-route="findings">查看 17 条 →</button></div><div class="table-wrap" style="border:0;border-radius:0"><table class="data-table"><thead><tr><th>风险</th><th>规则 / 位置</th><th>关系式</th><th>命中</th><th>状态</th></tr></thead><tbody>${findings.slice(0,3).map(f=>`<tr><td>${risk(f.risk)}</td><td>${routeButton('finding-detail',f.rule,f.where,f.id)}</td><td><code>${f.relation}</code></td><td>${f.hits}</td><td>${status(f.status)}</td></tr>`).join('')}</tbody></table></div></section></div>
+      <div><section class="panel" style="margin-bottom:14px"><div class="panel-head"><h3>材料与覆盖</h3><button class="link" data-route="assets">数据资产 →</button></div><div class="panel-body"><div class="kpi-bar"><span>材料解析</span><div class="track"><i style="width:100%"></i></div><b>100%</b></div><div class="kpi-bar" style="margin-top:12px"><span>规则覆盖</span><div class="track"><i style="width:96.2%;background:var(--amber)"></i></div><b>96.2%</b></div><div class="kpi-bar" style="margin-top:12px"><span>语义复核</span><div class="track"><i style="width:64%"></i></div><b>64%</b></div></div></section>
+      <section class="panel"><div class="panel-head"><h3>项目时间线</h3></div><div class="panel-body timeline"><div class="timeline-item"><i class="timeline-marker"></i><div><strong>Agent 复核排除 263 条候选</strong><p>样本编号、公共基因列表、公式派生列与共享对照。</p></div></div><div class="timeline-item"><i class="timeline-marker"></i><div><strong>规则扫描部分完成</strong><p>今天 08:56 · 636 数据块 · 2,000 候选上限。</p></div></div><div class="timeline-item"><i class="timeline-marker"></i><div><strong>材料快照 v3 冻结</strong><p>今天 08:17 · 14 文件 · 哈希校验通过。</p></div></div></div></section></div></div>`;
+    }
+
+    function runList(ops=false) {
+      return `${pageHead(ops?'任务调度':'任务中心',ops?'查看队列、节点、资源预算、心跳与恢复动作。':'每个任务锁定材料快照、规则版本、参数与运行环境，支持确定性复跑。',`<button class="btn primary" data-action="openScan">${icon('plus')}新建任务</button>`)}${toolbar('搜索任务编号或项目',`<select class="select" data-table-filter><option>全部阶段</option><option>解析</option><option>规则扫描</option><option>语义复核</option><option>报告</option></select>`)}<div class="table-wrap"><table class="data-table" data-filter-table><thead><tr><th>任务编号</th><th>项目</th><th>当前阶段</th><th>进度</th><th>覆盖</th>${ops?'<th>节点 / 预算</th>':''}<th>耗时</th><th>状态</th><th>操作</th></tr></thead><tbody>${runRows.map((r,i)=>`<tr><td>${routeButton('project-detail',r.id)}</td><td>${r.project}</td><td>${r.stage}</td><td><div class="kpi-bar"><div class="track"><i style="width:${r.progress}"></i></div><b>${r.progress}</b></div></td><td>${r.coverage}</td>${ops?`<td>worker-${i%3+1} · ${r.status==='部分完成'?'预算截断':'正常'}</td>`:''}<td>${r.elapsed}</td><td>${status(r.status)}</td><td><div class="row-actions">${actionBtn('log','查看日志','log',r.id)}${actionBtn(r.status==='部分完成'?'retry':r.status==='已暂停'?'resume':'pause',r.status==='部分完成'?'重试':r.status==='已暂停'?'继续':'暂停','play',r.id)}</div></td></tr>`).join('')}</tbody></table></div>`;
+    }
+
+    function findingList() {
+      return `${pageHead('异常线索','线索是可复现的统计信号，不等同于科研不端结论；风险只用于人工复核排序。',`<button class="btn" data-action="batchAssign">批量分派</button><button class="btn primary" data-action="export">${icon('download')}导出线索</button>`)}${toolbar('搜索线索编号、规则、文件或项目',`<select class="select" data-table-filter><option>全部风险</option><option>严重</option><option>高</option><option>中</option><option>低</option></select><select class="select" data-table-filter><option>全部状态</option><option>待人工</option><option>待复核</option><option>已解释</option></select>`)}<div class="table-wrap"><table class="data-table" data-filter-table><thead><tr><th><input type="checkbox" data-select-all /></th><th>风险</th><th>线索编号</th><th>规则 / 定位</th><th>关系式</th><th>命中规模</th><th>项目</th><th>复核状态</th><th>操作</th></tr></thead><tbody>${findings.map(f=>`<tr><td><input type="checkbox" data-finding-select value="${f.id}" /></td><td>${risk(f.risk)}</td><td>${routeButton('finding-detail',f.id,'',f.id)}</td><td>${routeButton('finding-detail',f.rule,f.where,f.id)}</td><td><code>${f.relation}</code></td><td>${f.hits}</td><td>${f.project}</td><td>${status(f.status)}</td><td><div class="row-actions">${actionBtn('openFinding','进入复核','eye',f.id)}${actionBtn('export','导出证据','download',f.id)}</div></td></tr>`).join('')}</tbody></table></div>`;
+    }
+
+    function reviewPage() {
+      const finding=findings.find(x=>x.id===state.selectedFindingId)||findings[0];
+      if(finding.id!==findings[0].id) return `${pageHead(`证据复核 · ${finding.id}`,`${finding.rule}｜${finding.where}`,`<button class="btn" data-route="findings">返回线索</button><button class="btn" data-action="export" data-id="${finding.id}">${icon('download')}证据包</button>`)}<div class="alert ${finding.risk==='高'?'red':'blue'}" style="margin-bottom:14px"><b>!</b><div><strong>${finding.risk}风险 · ${finding.rule}</strong><div>${finding.relation}；命中规模 ${finding.hits}。该关系需要结合原始数据标签与实验语义核验。</div></div></div><div class="review-layout"><section class="panel"><div class="panel-head"><h3>证据定位</h3>${risk(finding.risk)}</div><div class="panel-body"><div class="summary-list"><div><span>线索编号</span><b>${finding.id}</b></div><div><span>位置</span><b>${finding.where}</b></div><div><span>关系式</span><b>${finding.relation}</b></div><div><span>覆盖</span><b>${finding.hits}</b></div><div><span>复核状态</span><b>${finding.status}</b></div></div><div class="workflow-note" style="margin-top:14px">正式后端将按文件哈希、Sheet、行列范围加载完整原始值；本单文件交付保留来源定位与关系摘要。</div></div></section><section class="panel"><div class="panel-head"><h3>人工裁定</h3>${status(finding.status)}</div><div class="panel-body"><div class="field" style="margin-top:0"><label>裁定说明</label><textarea id="reviewNote">请核对共享对照、重新绘图、单位换算、归一化与公式派生等良性解释。</textarea></div><div class="actions" style="margin-top:12px"><button class="btn soft" data-action="explainFinding">标记已解释</button><button class="btn danger" data-action="escalateFinding">升级人工核验</button></div></div></section></div>`;
+      const rows=[[12.4,12.7],[8.9,9.2],[10.1,10.4],[15.8,16.1],[11.3,11.6],[9.7,10.0]];
+      return `${pageHead('证据复核 · FD-0041','固定平移｜Source Data Fig.4｜shHDAC6 · VR 0 h ↔ VR 24 h',`<button class="btn" data-route="findings">返回线索</button><button class="btn" data-action="export">${icon('download')}证据包</button>`)}
+      <div class="alert red" style="margin-bottom:14px"><b>!</b><div><strong>严重风险 · 跨时间点的整列固定平移</strong><div>两列各 35 个显微视野测量值，逐行全部满足固定差值 +0.300；标签表示不同时间点，普通随机测量波动难以直接解释。</div></div></div>
+      <div class="review-layout"><div><section class="panel" style="margin-bottom:14px"><div class="panel-head"><div><h3>原始数据并排核对</h3><small>41586_2024_8248_MOESM7_ESM.xlsx · Source Data Fig.4</small></div><span class="status info">哈希已校验</span></div><div class="panel-body"><div class="compare-grid"><div class="sheet-card"><div class="sheet-head">Fig. 4c · shHDAC6 · VR 0 h</div><table class="mini-sheet"><tr><th>视野</th><th>γH2AX+ (%)</th></tr>${rows.map((r,i)=>`<tr><td>${i+1}</td><td class="hot">${r[0].toFixed(1)}</td></tr>`).join('')}</table></div><div class="sheet-card"><div class="sheet-head">Fig. 4c · shHDAC6 · VR 24 h</div><table class="mini-sheet"><tr><th>视野</th><th>γH2AX+ (%)</th></tr>${rows.map((r,i)=>`<tr><td>${i+1}</td><td class="hot">${r[1].toFixed(1)}</td></tr>`).join('')}</table></div></div><div class="formula" style="margin-top:12px">VR 24 hᵢ = VR 0 hᵢ + 0.300　　i = 1…35　　例外：0</div><div class="chart-box"><svg viewBox="0 0 520 160" role="img" aria-label="两列数据固定平移散点图"><path d="M45 15v118h450M45 133 493 18" stroke="#d6e0eb" fill="none"/><path d="M45 128 485 24" stroke="#1688ff" stroke-width="2" stroke-dasharray="5 5" fill="none"/>${rows.concat([[13.2,13.5],[7.8,8.1],[14.5,14.8],[12.8,13.1]]).map((r,i)=>`<circle cx="${58+r[0]*24}" cy="${145-r[1]*7}" r="4.2" fill="#ed6565" opacity=".82"/>`).join('')}<text x="210" y="155" font-size="10" fill="#7d8b9d">VR 0 h</text><text x="5" y="18" font-size="10" fill="#7d8b9d">VR 24 h</text><text x="350" y="50" font-size="10" fill="#1688ff">y = x + 0.300 · R² = 1.000</text></svg></div></div></section>
+      <section class="panel"><div class="panel-head"><h3>复现摘要</h3><small>detector.fixed_shift · v2.4.1</small></div><div class="panel-body"><div class="info-list"><div class="info-row"><span>比较范围</span><strong>35 对数值 · 无缺失</strong></div><div class="info-row"><span>差值中位数</span><strong>0.300000</strong></div><div class="info-row"><span>最大残差</span><strong>&lt; 1×10⁻¹²</strong></div><div class="info-row"><span>随机化 P 值</span><strong>&lt; 0.0001</strong></div><div class="info-row"><span>数据精度</span><strong>1 位小数</strong></div><div class="info-row"><span>覆盖</span><strong>35 / 35 · 100%</strong></div></div></div></section></div>
+      <div><section class="panel" style="margin-bottom:14px"><div class="panel-head"><h3>良性解释挑战</h3><small>3 / 5 已检查</small></div><div class="panel-body check-list"><label class="check-item"><input type="checkbox" checked/><span>是否为同一数据的重新绘图或重复展示？</span><small>否</small></label><label class="check-item"><input type="checkbox" checked/><span>是否为单位换算或标准化派生列？</span><small>未见说明</small></label><label class="check-item"><input type="checkbox" checked/><span>是否共享同一对照或基线？</span><small>标签冲突</small></label><label class="check-item"><input type="checkbox"/><span>是否存在逐视野配对与统一背景校正？</span><small>需原始记录</small></label><label class="check-item"><input type="checkbox"/><span>是否可由 Methods 中明确公式解释？</span><small>待核对</small></label></div></section>
+      <section class="panel" style="margin-bottom:14px"><div class="panel-head"><h3>Agent 复核意见</h3><span class="status warning">建议升级</span></div><div class="panel-body"><p style="margin-top:0;line-height:1.7;color:#4c5a6d">列标签对应不同时间点下的显微视野定量。当前材料未说明逐视野一一配对或统一加 0.3 的变换。建议索取原始视野 ID、计数记录、背景校正步骤与实验批次映射。</p><div class="alert blue"><b>i</b><div>该意见用于辅助复核，不覆盖确定性检测结果，也不代替人工结论。</div></div></div></section>
+      <section class="panel"><div class="panel-head"><h3>人工裁定</h3>${status(state.reviewStatus)}</div><div class="panel-body"><div class="field" style="margin-top:0"><label>裁定说明</label><textarea id="reviewNote" placeholder="填写证据判断、尚需材料与措辞边界…">跨时间点两列 35 个值完全固定平移，现有材料未找到充分良性解释。建议获取原始视野 ID 与处理记录后进一步核验。</textarea></div><div class="actions" style="margin-top:12px"><button class="btn soft" data-action="explainFinding">标记已解释</button><button class="btn danger" data-action="escalateFinding">升级人工核验</button></div></div></section></div></div>`;
+    }
+
+    function reportPage() {
+      return `${pageHead('报告中心','报告固定包含材料与规则覆盖声明、关键线索、良性解释挑战、人工结论和可复现证据。',`<button class="btn primary" data-action="generateReport">${icon('plus')}生成报告</button>`)}${toolbar('搜索报告编号、项目或版本',`<select class="select" data-table-filter><option>全部状态</option><option>草稿</option><option>待签名</option><option>已封存</option></select>`)}<div class="table-wrap"><table class="data-table" data-filter-table><thead><tr><th>报告编号</th><th>项目</th><th>版本</th><th>线索摘要</th><th>状态</th><th>更新时间</th><th>操作</th></tr></thead><tbody>${reportRows.map(r=>`<tr><td>${routeButton('project-detail',r.id)}</td><td>${r.project}</td><td>${r.version}</td><td>${r.summary}</td><td>${status(r.status)}</td><td>${r.updated}</td><td><div class="row-actions">${actionBtn('previewReport','预览','eye',r.id)}${actionBtn('exportReport','导出','download',r.id)}${actionBtn('more','更多','more',r.id)}</div></td></tr>`).join('')}</tbody></table></div><div class="alert" style="margin-top:14px"><b>△</b><div><strong>零线索报告也必须保留范围声明</strong><div>标准表述：在已提供、成功解析且由当前规则覆盖的数据范围内，未发现达到阈值的统计信号；不涵盖未提供、解析失败或未覆盖内容。</div></div></div>`;
+    }
+
+    function assetsPage() {
+      const rows=[['41586_2024_8248_MOESM7_ESM.xlsx','XLSX','12.8 MB','30 Sheet · 636 块','已解析','SHA256 · 8b4e…91ad'],['article.pdf','PDF','8.4 MB','正文 18 页 · 12 表','已解析','SHA256 · 73c1…0f8b'],['supplementary_methods.docx','DOCX','2.1 MB','8 表 · 4 公式','已解析','SHA256 · 1c78…e661'],['figure_s8_scan.pdf','PDF','26.6 MB','扫描版 · OCR 队列','解析失败','SHA256 · f80b…c244']];
+      return `${pageHead('数据资产','原始层只读保存；结构化层、证据层与报告层均可回溯来源和生成器版本。',`<button class="btn" data-action="addMaterial">${icon('plus')}上传材料</button>`)}${toolbar('搜索文件、哈希、Sheet 或数据块',`<select class="select" data-table-filter><option>全部层级</option><option>原始层</option><option>结构化层</option><option>证据层</option><option>报告层</option></select>`)}<div class="table-wrap"><table class="data-table" data-filter-table><thead><tr><th>文件</th><th>类型</th><th>大小</th><th>解析产物</th><th>状态</th><th>完整性</th><th>操作</th></tr></thead><tbody>${rows.map(r=>`<tr><td>${routeButton('project-detail',r[0])}</td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${status(r[4])}</td><td><code>${r[5]}</code></td><td><div class="row-actions">${actionBtn('previewAsset','预览','eye',r[0])}${actionBtn(r[4]==='解析失败'?'retry':'downloadAsset',r[4]==='解析失败'?'重解析':'下载',r[4]==='解析失败'?'play':'download',r[0])}</div></td></tr>`).join('')}</tbody></table></div>`;
+    }
+
+    const ruleData=[['完全相同 / 片段复用','跨文件、Sheet、数据块比较整列、向量和连续片段。','共享对照、样本编号、公共基因列表','2.4.1','A ≡ B'],['固定平移','验证 B = A + c，输出常数、覆盖、残差与例外。','背景扣除、基线校正、合法变换','2.4.1','B=A+c'],['固定比例 / 缩放','验证 B = kA 或 B = kA + b。','单位换算、归一化、标准曲线','2.3.6','B=kA+b'],['顺序与尾数复用','重排匹配、小数尾数重复、片段搬移与微扰。','仪器精度、四舍五入、评分量表','2.2.9','tail(A)=tail(B)'],['重复向量 / 模板','重复变化向量、差分向量与机械轨迹。','设计矩阵、固定剂量序列','2.1.8','ΔA ≡ ΔB'],['统计量自洽','均值、SD、SE、CI、P 值与样本量核验。','配对设计、校正方法、单/双尾','2.4.0','SE=SD/√n'],['计数与比例','总数、分组、缺失、百分比与构成比交叉核验。','加权样本、重复测量、四舍五入','2.3.2','Σnᵢ=N'],['跨载体一致性','正文、摘要、主表与补充材料的同一指标对照。','版本差异、单位、亚组定义','1.9.7','text↔table'],['时间序列','轨迹复用、机械平移/缩放与异常同步。','公共基线、归一化、同源派生','2.0.4','xₜ↔yₜ']];
+    function ruleCards(admin) { const allRules=ruleData.concat(state.created.rules); return `${pageHead(admin?'规则包管理':'规则库',admin?'配置阈值、适用范围、排除条件、风险评分与发布版本。':'规则提供统计信号与复现证据；每条规则同时公开适用范围、限制和常见良性解释。',admin?`<button class="btn" data-action="importRule">导入规则包</button><button class="btn primary" data-action="createRule">${icon('plus')}创建规则</button>`:'')}${admin?'':`<div class="alert blue" style="margin-bottom:13px"><b>i</b><div><strong>方法依据与能力边界</strong><div>参考“耿同学”推文中的 PaperConan 工作原则：先复现数值关系，再排查共享对照、重绘、单位换算和公式派生。系统不判断作者意图，不替代统计审稿或实验重复，不单独进行图像造假判断，也不绕过付费墙。</div></div></div>`}<div class="toolbar" style="border-bottom:1px solid var(--line);border-radius:16px;margin-bottom:13px"><div class="toolbar-side"><label class="search">${icon('search')}<input data-card-search placeholder="搜索规则名称、公式或解释" /></label><select class="select"><option>全部规则族</option><option>复用检测</option><option>数学关系</option><option>统计一致性</option></select></div><div class="toolbar-side"><span style="color:var(--muted)">规则包 PaperAudit Standard 2.4.1</span></div></div><div class="cards" data-filter-cards>${allRules.map((r,i)=>`<article class="entity-card"><div class="card-visual"><span class="visual-formula">${r[4]}</span></div><div class="entity-body"><div style="display:flex;justify-content:space-between;gap:8px"><h3>${r[0]}</h3>${admin?`<span class="status ${i>=ruleData.length?'warning':'success'}">${i>=ruleData.length?'草稿':'已启用'}</span>`:''}</div><p>${r[1]}</p><p style="margin-top:7px;color:#9b752c"><b>优先排除：</b>${r[2]}</p><div class="entity-meta"><span>v${r[3]} · ${12+i*7} 条测试</span><button class="link" data-action="ruleDetail" data-id="${escapeHtml(r[0])}">查看说明 →</button></div></div></article>`).join('')}</div>`; }
+
+    function managementDashboard(route) {
+      const isOps=route==='ops-home', isAdmin=route==='admin-home';
+      const title=isOps?'任务与数据运行态势':isAdmin?'管理与治理总览':'检测能力总览';
+      return `${pageHead(title,isOps?'接入、解析、调度、覆盖和资源使用统一监控。':isAdmin?'用户、项目、任务、风险、审计与平台健康状态。':'解析器、检测器、规则包、Skill、Agent 与发布状态。')}
+      <div class="stats">${statCard(isAdmin?'用户':'在线能力',isAdmin?'286':isOps?'17':'38','服务状态正常','green')}${statCard(isOps?'队列任务':isAdmin?'活跃用户':'检测器','12','本周稳定','blue')}${statCard(isOps?'运行节点':isAdmin?'项目总数':'规则','8',isOps?'1 节点高负载':'标准包已发布','amber')}${statCard(isAdmin?'待审核':'失败任务','5','需要处理','red')}${statCard(isOps?'存储使用':isAdmin?'服务可用性':'回归通过率',isOps?'68.4%':isAdmin?'99.96%':'98.7%','过去 30 天','purple')}</div>
+      <div class="grid-even"><section class="panel"><div class="panel-head"><h3>${isOps?'任务吞吐与失败':'版本与健康状态'}</h3><small>过去 7 天</small></div><div class="panel-body"><svg viewBox="0 0 600 210" style="width:100%;height:220px"><defs><linearGradient id="area" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1688ff" stop-opacity=".28"/><stop offset="1" stop-color="#1688ff" stop-opacity="0"/></linearGradient></defs><path d="M35 170H575M35 125H575M35 80H575M35 35H575" stroke="#edf1f5"/><path d="M35 150 C90 120 105 145 160 108 S240 80 292 102 S385 55 430 70 S520 33 575 48 L575 180H35Z" fill="url(#area)"/><path d="M35 150 C90 120 105 145 160 108 S240 80 292 102 S385 55 430 70 S520 33 575 48" fill="none" stroke="#1688ff" stroke-width="3"/><g fill="#1688ff">${[[35,150],[160,108],[292,102],[430,70],[575,48]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="4"/>`).join('')}</g></svg></div></section><section class="panel"><div class="panel-head"><h3>需要关注</h3><small>按影响排序</small></div><div class="panel-body"><div class="alert red"><b>!</b><div><strong>${isOps?'worker-03 心跳延迟':'规则回归存在 2 项波动'}</strong><div>已自动隔离受影响任务，新任务不会调度到异常资源。</div></div></div><div class="alert" style="margin-top:10px"><b>△</b><div><strong>候选上限告警 3 次</strong><div>建议为大型数据块启用分片并提高深度扫描预算。</div></div></div><div class="alert blue" style="margin-top:10px"><b>i</b><div><strong>规则包 2.5.0 待发布</strong><div>98.7% 回归用例通过，仍有 2 个误报样例待确认。</div></div></div></div></section></div>`;
+    }
+
+    function detectorsPage() {
+      const rows=[['detector.exact_match','完全相同 / 片段复用','Python','2.4.1','126 / 126','已发布'],['detector.fixed_shift','固定平移','Python','2.4.1','88 / 88','已发布'],['detector.affine','比例与线性变换','R + Python','2.3.6','104 / 104','已发布'],['detector.tail_reuse','尾数与微扰复用','Python','2.2.9','72 / 74','审核中'],['detector.stat_coherence','统计量自洽','R','2.4.0','93 / 93','已发布']].concat(state.created.detectors);
+      return `${pageHead('检测器库','确定性计算能力独立版本化、容器化和回归验证，输出不可被 Agent 改写。',`<button class="btn primary" data-action="createDetector">${icon('plus')}注册检测器</button>`)}${toolbar('搜索检测器、运行时或版本')}<div class="table-wrap"><table class="data-table" data-filter-table><thead><tr><th>检测器 ID</th><th>名称</th><th>运行时</th><th>版本</th><th>回归用例</th><th>状态</th><th>操作</th></tr></thead><tbody>${rows.map(r=>`<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${status(r[5])}</td><td><div class="row-actions">${actionBtn('detectorDetail','配置','eye',r[0])}${actionBtn('testDetector','测试','play',r[0])}</div></td></tr>`).join('')}</tbody></table></div>`;
+    }
+
+    function parserPage(operations) {
+      const rows=[['parser.excel','Excel 工作簿','XLSX / XLSM','3.6.2','99.7%','已发布'],['parser.tabular','分隔文本','CSV / TSV','2.8.0','99.9%','已发布'],['parser.pdf_table','PDF 表格','PDF','4.1.3','94.6%','已发布'],['parser.docx_table','Word 表格','DOCX','2.4.5','97.8%','已发布'],['parser.ocr_table','OCR 表格','扫描 PDF / 图片','1.9.2','87.4%','灰度中']].concat(state.created.parsers);
+      return `${pageHead(operations?'解析管理':'解析器库',operations?'查看每个文件的解析器、产物、失败原因与恢复动作。':'管理格式支持、解析器版本、样例测试和失败策略。',operations?'<button class="btn" data-action="export">导出诊断</button>':`<button class="btn primary" data-action="registerParser">${icon('plus')}注册解析器</button>`)}${toolbar('搜索解析器、格式或版本')}<div class="table-wrap"><table class="data-table" data-filter-table><thead><tr><th>解析器</th><th>能力</th><th>格式</th><th>版本</th><th>${operations?'今日成功率':'基准成功率'}</th><th>状态</th><th>操作</th></tr></thead><tbody>${rows.map((r,i)=>`<tr><td><code>${r[0]}</code></td><td>${r[1]}</td><td>${r[2]}</td><td>${r[3]}</td><td>${r[4]}</td><td>${status(i===4&&operations?'2 个失败':r[5])}</td><td><div class="row-actions">${actionBtn('parserDetail','查看','eye',r[0])}${actionBtn(i===4&&operations?'retry':'testParser',i===4&&operations?'重解析':'测试','play',r[0])}</div></td></tr>`).join('')}</tbody></table></div>`;
+    }
+
+    function coveragePage() { return `${pageHead('覆盖管理','覆盖声明是报告的一部分：清楚说明已处理、失败、跳过、截断和未获取内容。',`<button class="btn primary" data-action="export">${icon('download')}生成覆盖声明</button>`)}<div class="stats">${statCard('材料覆盖','96.8%','1,248 / 1,289','green')}${statCard('数据块覆盖','93.4%','18,402 / 19,701','blue')}${statCard('规则覆盖','91.7%','按适用性计算','purple')}${statCard('解析失败','12','涉及 8 个项目','red')}${statCard('预算截断','7','已安排补扫','amber')}</div><div class="grid-even"><section class="panel"><div class="panel-head"><h3>覆盖矩阵</h3><small>项目 × 处理阶段</small></div><div class="panel-body"><div class="summary-list"><div><span>Human HDAC6…</span><b>材料 100% · 解析 100% · 扫描 96.2% · 复核 64%</b></div><div><span>肿瘤代谢多组学…</span><b>材料 90.9% · 解析 87.5% · 扫描 64%</b></div><div><span>单细胞图谱…</span><b>材料 100% · 解析 100% · 扫描 100%</b></div></div></div></section><section class="panel"><div class="panel-head"><h3>未覆盖原因</h3></div><div class="panel-body legend"><div class="legend-row"><i style="background:var(--red)"></i><span>解析失败</span><strong>12 文件</strong></div><div class="legend-row"><i style="background:var(--amber)"></i><span>候选数量上限</span><strong>7 任务</strong></div><div class="legend-row"><i style="background:var(--purple)"></i><span>材料未公开 / 未提供</span><strong>18 文件</strong></div><div class="legend-row"><i style="background:var(--blue)"></i><span>规则不适用</span><strong>1,126 块</strong></div></div></section></div>`; }
+
+    function resourcesPage() { const nodes=[['worker-01','解析 / 扫描','54%','68%','3','12 秒前','在线'],['worker-02','规则扫描','72%','76%','4','8 秒前','在线'],['worker-03','OCR / 解析','91%','88%','2','4 分钟前','已隔离'],['worker-04','Agent / 报告','43%','61%','3','6 秒前','在线']].concat(state.created.nodes); return `${pageHead('资源与配额','管理计算节点、存储、并发任务与用户/组织配额。',`<button class="btn primary" data-action="addNode">${icon('plus')}新增节点</button>`)}<div class="stats">${statCard('在线节点',`${nodes.filter(n=>n[6]==='在线').length} / ${nodes.length}`,'隔离节点不接收任务','green')}${statCard('CPU 使用','61%','128 核可用','blue')}${statCard('内存使用','72%','512 GB 总量','amber')}${statCard('对象存储','68.4%','12.6 TB / 18.4 TB','purple')}${statCard('队列任务','12','高优先级 3','red')}</div>${toolbar('搜索节点名称、编号或 IP')}<div class="table-wrap"><table class="data-table" data-filter-table><thead><tr><th>节点</th><th>角色</th><th>CPU</th><th>内存</th><th>运行任务</th><th>心跳</th><th>状态</th></tr></thead><tbody>${nodes.map(r=>`<tr>${r.map((v,i)=>`<td>${i===6?status(v):v}</td>`).join('')}</tr>`).join('')}</tbody></table></div>`; }
+
+    function ingestionPage() { return `${pageHead('接入管理','统一管理 DOI/URL、上传文件、本地目录、授权、哈希、缺失与重复。',`<button class="btn primary" data-action="openScan">${icon('plus')}新建接入</button>`)}${toolbar('搜索接入批次、项目或来源')}<div class="table-wrap"><table class="data-table" data-filter-table><thead><tr><th>接入批次</th><th>项目</th><th>来源</th><th>文件</th><th>哈希</th><th>缺失 / 重复</th><th>状态</th><th>操作</th></tr></thead><tbody>${[['IN-0918-006','Human HDAC6…','DOI + 期刊公开材料','14 / 14','已校验','0 / 0','已冻结'],['IN-0918-014','肿瘤代谢多组学…','本地上传','22 / 24','20 已校验','2 / 1','待补充'],['IN-0917-021','单细胞图谱…','授权本地目录','31 / 31','已校验','0 / 2','已冻结']].map(r=>`<tr>${r.map((v,i)=>`<td>${i===6?status(v):v}</td>`).join('')}<td><div class="row-actions">${actionBtn('ingestDetail','查看')}${actionBtn('retry','重试','play')}</div></td></tr>`).join('')}</tbody></table></div>`; }
+
+    function capabilityPage(route) {
+      const cfg={skills:['Skill 库','输入输出、依赖、权限、失败策略与验收用例','材料获取 Skill|解析编排 Skill|规则扫描 Skill|证据复核 Skill|报告生成 Skill'],agents:['Agent 库','语义理解与成文辅助，不覆盖确定性结果','材料理解 Agent|线索复核 Agent|假阳性挑战 Agent|报告成文 Agent|质量审校 Agent'],testing:['测试与发布','基准数据、回归、性能、误报审查与镜像发布','解析基准集|检测回归集|误报挑战集|性能压力集|发布门禁'] }[route];
+      const names=cfg[2].split('|').concat(state.created[route]||[]);
+      return `${pageHead(cfg[0],cfg[1],`<button class="btn primary" data-action="createCapability">${icon('plus')}创建</button>`)}<div class="cards">${names.map((name,i)=>`<article class="entity-card"><div class="card-visual"><span class="visual-formula">${route==='agents'?'Agent':route==='skills'?'Skill':'QA'} ${String(i+1).padStart(2,'0')}</span></div><div class="entity-body"><h3>${escapeHtml(name)}</h3><p>${i%2?'已绑定标准规则包与审计钩子。':'覆盖核心流程，提供可复现输入输出契约。'}</p><div class="entity-meta"><span>v${2+i}.4.${i} · ${i>=cfg[2].split('|').length?'草稿':i===3?'审核中':'已发布'}</span><button class="link" data-action="capabilityDetail" data-id="${escapeHtml(name)}">进入配置 →</button></div></div></article>`).join('')}</div>`;
+    }
+
+    function adminPage(route) {
+      const configs={users:['用户与组织','用户画像、组织、数据域与项目范围。',['林知行|科研审查组|审查员|活跃','周明远|算法平台组|规则管理员|活跃','叶清扬|期刊合作组|报告审核员|活跃','许南乔|外部协作|只读访客|已停用']],roles:['角色与权限','菜单、操作、数据域、敏感导出与人工裁定权限。',['系统管理员|42 项权限|全域|8 人','审查员|26 项权限|所属项目|48 人','报告审核员|18 项权限|分配项目|12 人','只读访客|7 项权限|授权项目|29 人']],audit:['审核与审计','高风险裁定、报告封存、删除、导出与配置发布留痕。',['AU-0918-052|报告封存|RP-20260916-021|待审核','AU-0918-049|规则包发布|PaperAudit 2.5.0|待审核','AU-0918-044|敏感证据导出|FD-0041|已通过','AU-0917-118|用户权限变更|user-0286|已通过']],brand:['页面与品牌','Logo、名称、主题、登录页、支持信息与通知模板。',['品牌名称|慧研鉴证|全端|已生效','主主题色|#1688FF|全端|已生效','技术支持|科研计算平台组|页脚|已生效','登录页背景|研究数据脉络图|登录页|草稿']], 'global-policy':['全局策略','默认规则包、模型白名单、存储周期、配额与告警策略。',['默认规则包|PaperAudit Standard 2.4.1|所有新项目|已生效','模型白名单|GPT-5 / 内部模型 A|Agent任务|已生效','原始材料留存|项目关闭后 365 天|内部项目|已生效','严重线索通知|站内 + 邮件|审查负责人|已生效']]};
+      const c=configs[route];
+      const liveAudit=route==='audit'?state.auditTrail.map((a,i)=>`LIVE-${String(i+1).padStart(3,'0')}|${a.action}|${a.target}|已记录`):[];
+      const rows=liveAudit.concat(c[2],state.created[route]||[]);
+      return `${pageHead(c[0],c[1],`<button class="btn primary" data-action="createAdmin">${icon('plus')}创建</button>`)}${toolbar('搜索名称、编号或状态')}<div class="table-wrap"><table class="data-table" data-filter-table><thead><tr><th>名称 / 编号</th><th>类型 / 范围</th><th>角色 / 对象</th><th>状态</th><th>操作</th></tr></thead><tbody>${rows.map(x=>{const r=x.split('|');return `<tr><td>${r[0]}</td><td>${r[1]}</td><td>${r[2]}</td><td>${status(r[3])}</td><td><div class="row-actions">${actionBtn('adminDetail','查看','eye',r[0])}${actionBtn('adminMore','更多','more',r[0])}</div></td></tr>`}).join('')}</tbody></table></div>`;
+    }
+
+    function settingsPage(route) { const opt=(value,current)=>`<option${value===current?' selected':''}>${value}</option>`; return `${pageHead(routeMeta[route]?.[0]||'设置',routeMeta[route]?.[1]||'管理个人与平台参数。',`<button class="btn primary" data-action="saveSettings">保存设置</button>`)}<div class="grid-even"><section class="panel"><div class="panel-head"><h3>默认扫描策略</h3></div><div class="panel-body"><div class="field" style="margin-top:0"><label>默认规则包</label><select class="select" data-setting="rulePack" style="width:100%">${opt('PaperAudit Standard 2.4.1',state.settings.rulePack)}${opt('PaperAudit Deep 2.4.1',state.settings.rulePack)}</select></div><div class="field"><label>任务完成通知</label><select class="select" data-setting="notice" style="width:100%">${opt('站内 + 邮件',state.settings.notice)}${opt('仅站内',state.settings.notice)}</select></div><div class="field"><label>默认报告格式</label><select class="select" data-setting="reportFormat" style="width:100%">${opt('Word + PDF + HTML',state.settings.reportFormat)}${opt('仅 Word',state.settings.reportFormat)}</select></div></div></section><section class="panel"><div class="panel-head"><h3>安全与资源</h3></div><div class="panel-body"><div class="summary-list"><div><span>存储配额</span><b>68.4 GB / 100 GB</b></div><div><span>计算时长</span><b>126 / 300 小时</b></div><div><span>并发任务</span><b>3 / 5</b></div><div><span>最近登录</span><b>今天 08:21 · 可信设备</b></div></div></div></section></div>`; }
+
+    function openWizard() { state.wizard=1; byId('scanModal').classList.add('open'); renderWizard(); }
+    function renderWizard() {
+      const step=state.wizard;
+      const steps=['选择来源','扫描策略','确认任务'];
+      const stepper=`<div class="wizard-steps">${steps.map((x,i)=>`<div class="wizard-step ${i+1<step?'done':i+1===step?'active':''}"><i>${i+1<step?'✓':i+1}</i><span>${x}</span></div>`).join('')}</div>`;
+      let body='';
+      if(step===1) body=`${stepper}<div class="source-options"><button class="source-option ${state.source==='doi'?'selected':''}" data-source="doi"><span class="source-icon">⌁</span><b>DOI / 公开链接</b><small>解析论文元数据并获取公开补充材料</small></button><button class="source-option ${state.source==='upload'?'selected':''}" data-source="upload"><span class="source-icon">⇧</span><b>上传材料</b><small>上传 PDF、Word、Excel、CSV、TSV</small></button><button class="source-option ${state.source==='folder'?'selected':''}" data-source="folder"><span class="source-icon">▣</span><b>本地目录</b><small>登记已授权目录并创建只读快照</small></button></div><div class="field"><label>${state.source==='doi'?'DOI 或公开链接':state.source==='folder'?'本地目录路径':'项目名称'}</label><input id="sourceInput" value="${state.source==='doi'?'10.1038/s41586-024-08248-5':''}" placeholder="请输入…" /></div><div class="alert blue" style="margin-top:14px"><b>i</b><div>系统仅访问你有权使用的材料；遇到付费墙或权限限制时会列入缺失清单，不会绕过访问控制。</div></div>`;
+      if(step===2) body=`${stepper}<div class="strategy-grid"><button class="strategy ${state.strategy==='quick'?'selected':''}" data-strategy="quick"><b>快速体检</b><small>核心重复与算术关系，预计 15–30 分钟</small></button><button class="strategy ${state.strategy==='standard'?'selected':''}" data-strategy="standard"><b>标准筛查</b><small>完整规则包 + Agent 复核，推荐</small></button><button class="strategy ${state.strategy==='deep'?'selected':''}" data-strategy="deep"><b>深度筛查</b><small>提高预算、启用重排与尾数搜索</small></button></div><div class="field"><label>启用规则</label><div class="check-list"><label class="check-item"><input type="checkbox" checked/><span>相同/固定平移/比例/线性关系</span><small>核心</small></label><label class="check-item"><input type="checkbox" checked/><span>尾数、精度、重复向量与机械轨迹</span><small>扩展</small></label><label class="check-item"><input type="checkbox" checked/><span>计数、比例、统计量与跨载体一致性</span><small>一致性</small></label></div></div>`;
+      if(step===3) body=`${stepper}<div class="summary-list"><div><span>项目来源</span><b>${state.source==='doi'?'DOI / 公开材料':state.source==='upload'?'上传材料':'本地目录'}</b></div><div><span>论文</span><b>Human HDAC6 senses valine abundancy…</b></div><div><span>材料预检</span><b>14 个文件可获取 · 预计 636 数据块</b></div><div><span>扫描策略</span><b>${state.strategy==='quick'?'快速体检':state.strategy==='deep'?'深度筛查':'标准筛查'} · PaperAudit 2.4.1</b></div><div><span>覆盖要求</span><b>记录解析失败、预算截断与未覆盖区域</b></div></div><label class="check-item" style="margin-top:14px"><input type="checkbox" checked/><span>我确认有权处理所选材料，并理解线索不等同于科研不端结论。</span></label>`;
+      byId('wizardBody').innerHTML=body;
+      byId('wizardPrev').style.visibility=step===1?'hidden':'visible';
+      byId('wizardNext').innerHTML=step===3?`${icon('play')}创建并运行`:'下一步';
+    }
+
+    function toast(title,message='') { const el=document.createElement('div'); el.className='toast'; el.innerHTML=`<i>✓</i><div><strong>${title}</strong><small>${message}</small></div>`; byId('toastStack').appendChild(el); setTimeout(()=>el.remove(),3600); }
+    function audit(action,target,detail='') { state.auditTrail.unshift({time:new Date().toLocaleString('zh-CN',{hour12:false}),action,target,detail}); persist(); }
+    function downloadText(filename,text,type='text/plain;charset=utf-8') {
+      audit('导出文件',filename,`来源页面：${state.route}`);
+      if(typeof Blob==='undefined'||typeof URL==='undefined'||!document.body) { toast('文件已生成',filename); return; }
+      const url=URL.createObjectURL(new Blob([text],{type})); const a=document.createElement('a'); a.href=url; a.download=filename; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(url),500);
+      toast('文件已下载',filename);
+    }
+    function exportCurrent(id='') {
+      if(state.route==='findings'||id.startsWith('FD-')) {
+        const rows=findings.filter(f=>!id||f.id===id); const csv=['线索编号,风险,规则,定位,关系式,命中规模,状态',...rows.map(f=>[f.id,f.risk,f.rule,f.where,f.relation,f.hits,f.status].map(v=>`"${String(v).replace(/"/g,'""')}"`).join(','))].join('\n');
+        downloadText(id?`${id}_证据摘要.csv`:'异常线索清单.csv','\ufeff'+csv,'text/csv;charset=utf-8'); return;
+      }
+      if(state.route==='reports'||id.startsWith('RP-')) { const r=reportRows.find(x=>x.id===id)||reportRows[0]; downloadText(`${r.id}_${r.version}.html`,`<!doctype html><meta charset="utf-8"><title>${r.id}</title><h1>论文科研数据异常筛查报告</h1><p>项目：${r.project}</p><p>版本：${r.version}</p><p>线索摘要：${r.summary}</p><p>覆盖声明：仅涵盖已提供、成功解析且由当前规则覆盖的数据范围。</p>`,'text/html;charset=utf-8'); return; }
+      if(state.route==='coverage') { downloadText('覆盖声明.txt','材料覆盖 96.8%\n数据块覆盖 93.4%\n规则覆盖 91.7%\n解析失败 12 个文件\n预算截断 7 个任务\n未覆盖区域不得解释为不存在其他信号。'); return; }
+      downloadText(`${state.route}_导出_${new Date().toISOString().slice(0,10)}.json`,JSON.stringify({route:state.route,exportedAt:new Date().toISOString(),projects,runRows,findings,reportRows,audit:state.auditTrail},null,2),'application/json;charset=utf-8');
+    }
+    function openWorkflow(action,id='') {
+      state.workflow=action; state.selectedId=id; const modal=byId('workflowModal'), body=byId('workflowBody'), foot=byId('workflowFoot');
+      let title='业务操作',sub='提交后立即更新当前页面并写入审计记录',html='',confirm='确认提交',editable=true;
+      const field=(label,input,wide=false)=>`<div class="field ${wide?'span-2':''}"><label>${label}</label>${input}</div>`;
+      if(action==='addMaterial'){title='补充项目材料';sub='文件进入只读原始层，完成哈希后创建新的材料快照';html=`<div class="form-grid">${field('选择文件','<input id="wfFile" type="file" multiple accept=".xlsx,.xlsm,.csv,.tsv,.pdf,.docx" />',true)}${field('材料类型','<select class="select" id="wfType"><option>补充数据</option><option>正文</option><option>方法附件</option><option>原始记录</option></select>')}${field('授权依据','<select class="select" id="wfAuth"><option>公开材料</option><option>项目授权</option><option>用户上传</option></select>')}${field('说明','<textarea id="wfNote">补充材料用于完善当前项目覆盖范围。</textarea>',true)}</div><div class="workflow-note" style="margin-top:14px">提交后会登记来源、大小、SHA256、上传人和时间；不会覆盖已有快照。</div>`;}
+      else if(action==='generateReport'){title='生成报告版本';html=`<div class="form-grid">${field('项目','<select class="select" id="wfProject"><option>Human HDAC6 senses valine abundancy…</option><option>肿瘤代谢多组学标志物研究</option></select>',true)}${field('报告版本','<input id="wfVersion" value="v1.4" />')}${field('输出格式','<select class="select" id="wfFormat"><option>Word + PDF + HTML</option><option>Word</option><option>HTML</option></select>')}${field('范围声明','<textarea id="wfScope">包含已成功解析材料、当前规则覆盖、预算截断与未覆盖区域。</textarea>',true)}</div>`;}
+      else if(action==='batchAssign'){title='批量分派线索';html=`<div class="check-list">${findings.map(f=>`<label class="check-item"><input type="checkbox" name="assignFinding" value="${f.id}"/><span>${f.id} · ${f.rule}</span><small>${f.status}</small></label>`).join('')}</div><div class="form-grid">${field('分派给','<select class="select" id="wfAssignee"><option>林知行 · 科研审查组</option><option>叶清扬 · 报告审核组</option><option>周明远 · 统计专家组</option></select>',true)}${field('截止日期','<input id="wfDue" type="date" value="2026-09-25" />')}${field('优先级','<select class="select" id="wfPriority"><option>高</option><option>普通</option></select>')}</div>`;}
+      else if(action==='createRule'){title='创建检测规则';html=`<div class="form-grid">${field('规则名称','<input id="wfName" value="新建确定性规则" />')}${field('规则公式','<input id="wfFormula" value="B = A + c" />')}${field('适用范围','<input id="wfScope" value="数值型连续列" />')}${field('初始版本','<input id="wfVersion" value="0.1.0" />')}${field('规则说明','<textarea id="wfDesc">输出关系式、覆盖、残差和例外值。</textarea>',true)}${field('优先排除','<textarea id="wfExclude">单位换算、共享对照、公式派生。</textarea>',true)}</div>`;}
+      else if(action==='importRule'){title='导入规则包';html=`<div class="form-grid">${field('规则包文件','<input id="wfFile" type="file" accept=".json,.zip" />',true)}${field('导入方式','<select class="select" id="wfMode"><option>创建草稿版本</option><option>覆盖未发布草稿</option></select>')}${field('签名校验','<select class="select"><option>必须通过</option></select>')}</div><div class="workflow-note" style="margin-top:14px">导入后仍需完成契约校验、回归测试、人工审核和发布门禁。</div>`;}
+      else if(action==='createDetector'){title='注册确定性检测器';html=`<div class="form-grid">${field('检测器 ID','<input id="wfId" value="detector.custom_relation" />')}${field('名称','<input id="wfName" value="自定义关系检测" />')}${field('运行时','<select class="select" id="wfRuntime"><option>Python</option><option>R</option><option>Python + R</option></select>')}${field('版本','<input id="wfVersion" value="0.1.0" />')}${field('容器镜像','<input id="wfImage" value="registry/paperaudit/custom:0.1.0" />',true)}${field('输入输出契约','<textarea id="wfContract">输入：结构化数值块；输出：证据坐标、关系式、覆盖、残差和例外。</textarea>',true)}</div>`;}
+      else if(action==='registerParser'){title='注册解析器';html=`<div class="form-grid">${field('解析器 ID','<input id="wfId" value="parser.custom_table" />')}${field('能力名称','<input id="wfName" value="自定义表格解析" />')}${field('支持格式','<input id="wfFormat" value="XLSX / CSV" />')}${field('版本','<input id="wfVersion" value="0.1.0" />')}${field('失败策略','<textarea id="wfFail">保留原文件、记录错误、允许切换解析器重试。</textarea>',true)}</div>`;}
+      else if(action==='createCapability'){title=`创建${state.route==='agents'?' Agent':state.route==='skills'?' Skill':'测试集'}`;html=`<div class="form-grid">${field('名称','<input id="wfName" value="新建能力" />')}${field('版本','<input id="wfVersion" value="0.1.0" />')}${field('输入契约','<textarea id="wfInput">材料快照、任务参数与授权上下文。</textarea>',true)}${field('输出契约','<textarea id="wfOutput">结构化结果、错误码、覆盖与审计事件。</textarea>',true)}</div>`;}
+      else if(action==='createAdmin'){title=`创建${routeMeta[state.route]?.[0]||'管理对象'}`;html=`<div class="form-grid">${field('名称','<input id="wfName" value="新建配置" />')}${field('类型 / 范围','<input id="wfType" value="项目级" />')}${field('角色 / 对象','<input id="wfTarget" value="科研审查组" />')}${field('生效状态','<select class="select" id="wfStatus"><option>草稿</option><option>已生效</option></select>')}${field('变更说明','<textarea id="wfNote">按最小权限原则创建。</textarea>',true)}</div>`;}
+      else if(action==='addNode'){title='新增计算节点';html=`<div class="form-grid">${field('节点名称','<input id="wfName" value="worker-05" />')}${field('节点地址','<input id="wfAddress" value="10.24.8.25" />')}${field('角色','<select class="select" id="wfRole"><option>解析 / 扫描</option><option>规则扫描</option><option>Agent / 报告</option></select>')}${field('资源上限','<input id="wfQuota" value="16 CPU / 64 GB" />')}${field('接入令牌','<input id="wfToken" type="password" value="node-enroll-token" />',true)}</div>`;}
+      else if(action==='log'){title=`运行日志 · ${id}`;sub='日志与运行快照保持同一任务版本';editable=false;html=`<pre class="log-view">09:18:02 INFO  snapshot verified · 14 files · sha256 ok\n09:18:11 INFO  parser.excel@3.6.2 · 30 sheets · 636 blocks\n09:20:44 INFO  detector.fixed_shift@2.4.1 · candidates 38\n09:21:06 INFO  benign-explanation challenge · filtered 21\n09:22:31 WARN  candidate limit reached on 3 large blocks\n09:23:18 INFO  checkpoint saved · coverage 96.2%\n09:24:03 INFO  waiting for human review</pre>`;}
+      else if(action==='previewReport'){const r=reportRows.find(x=>x.id===id)||reportRows[0];title=`报告预览 · ${r.id}`;editable=false;html=`<article class="preview-page"><h2>论文科研数据异常筛查报告</h2><p style="text-align:center">${r.project} · ${r.version}</p><h3>执行摘要</h3><p>本次任务覆盖 14 个官方文件、30 张工作表和 636 个数据块。识别到 ${r.summary}，线索仅用于人工复核排序。</p><h3>关键线索</h3><p>FD-0041：两列 35 个值均满足 VR 24 h = VR 0 h + 0.300；当前材料未找到充分良性解释。</p><h3>覆盖声明</h3><p>任务状态为 partial。已报告关系可复现；解析失败、预算截断和规则未覆盖区域不能解释为不存在其他信号。</p></article>`;}
+      else if(['ruleDetail','detectorDetail','parserDetail','capabilityDetail','adminDetail','ingestDetail','previewAsset'].includes(action)){title=`${id||'对象'} · 详情`;editable=false;html=`<div class="summary-list"><div><span>对象</span><b>${escapeHtml(id||'当前记录')}</b></div><div><span>版本 / 快照</span><b>已锁定 · 可追溯</b></div><div><span>权限</span><b>当前用户具备只读与配置权限</b></div><div><span>最近变更</span><b>2026-09-18 09:42 · 林知行</b></div><div><span>审计状态</span><b>输入、输出、哈希与操作记录完整</b></div></div><div class="workflow-note" style="margin-top:14px">正式交付中该详情对应独立后端资源，并使用版本号与乐观锁避免覆盖他人修改。</div>`;}
+      else if(['testDetector','testParser'].includes(action)){title=`回归测试 · ${id}`;editable=false;html=`<div class="stats" style="grid-template-columns:repeat(3,1fr)">${statCard('通过','126','全部核心用例','green')}${statCard('失败','0','无阻塞项','blue')}${statCard('耗时','38.6s','固定镜像运行','purple')}</div><pre class="log-view">PASS contract.schema\nPASS missing-value cases\nPASS numeric precision\nPASS evidence coordinates\nPASS deterministic replay\nRESULT publish gate passed</pre>`;audit('执行回归测试',id,'全部门禁通过');}
+      else if(action==='more'){title='更多操作';html=`<div class="check-list"><label class="check-item"><input type="radio" name="wfMore" value="version" checked/><span>创建新版本</span><small>保留当前版本</small></label><label class="check-item"><input type="radio" name="wfMore" value="sign"/><span>提交签名</span><small>进入审核队列</small></label><label class="check-item"><input type="radio" name="wfMore" value="archive"/><span>封存</span><small>锁定内容与证据包</small></label></div>`;}
+      else if(action==='adminMore'){title=`管理操作 · ${id}`;html=`<div class="check-list"><label class="check-item"><input type="radio" name="wfAdminMore" value="scope" checked/><span>调整数据范围</span><small>重新计算最小权限</small></label><label class="check-item"><input type="radio" name="wfAdminMore" value="disable"/><span>停用</span><small>保留历史与审计记录</small></label><label class="check-item"><input type="radio" name="wfAdminMore" value="review"/><span>提交复核</span><small>进入管理员审核队列</small></label></div><div class="field"><label>操作原因</label><textarea id="wfNote">按权限治理流程调整。</textarea></div>`;}
+      foot.innerHTML=editable?`<button class="btn" data-action="closeWorkflow">取消</button><button class="btn primary" data-action="submitWorkflow">${confirm}</button>`:`<button class="btn" data-action="closeWorkflow">关闭</button>`;
+      byId('workflowTitle').textContent=title; byId('workflowSubtitle').textContent=sub; body.innerHTML=html; modal.classList.add('open');
+    }
+    function workflowValue(id,fallback=''){const el=byId(id);return el&&'value'in el&&el.value!==''?el.value:fallback;}
+    function submitWorkflow(){
+      const action=state.workflow,id=state.selectedId; let message='操作已完成';
+      if(action==='addMaterial'){state.projectMaterials+=1;audit('补充材料',projects[0].id,workflowValue('wfNote'));message=`材料快照已更新为 v4，共 ${state.projectMaterials} 个文件`;}
+      else if(action==='generateReport'){const rid=`RP-${new Date().toISOString().slice(0,10).replace(/-/g,'')}-${String(reportRows.length+23).padStart(3,'0')}`;reportRows.unshift({id:rid,project:workflowValue('wfProject','Human HDAC6…'),version:workflowValue('wfVersion','v1.4'),summary:'严重 1 · 高 2 · 中 3',status:'草稿',updated:'刚刚'});audit('生成报告',rid,workflowValue('wfScope'));message=`${rid} 已生成草稿`;state.route='reports';}
+      else if(action==='batchAssign'){const checks=[...byId('workflowBody').querySelectorAll('input[name="assignFinding"]:checked')];const ids=checks.map(x=>x.value);(ids.length?ids:[findings[0].id]).forEach(fid=>{const f=findings.find(x=>x.id===fid);if(f)f.status='待人工';});audit('批量分派',ids.join(',')||findings[0].id,workflowValue('wfAssignee'));message=`已分派 ${Math.max(1,ids.length)} 条线索`;}
+      else if(action==='createRule'){state.created.rules.push([workflowValue('wfName'),workflowValue('wfDesc'),workflowValue('wfExclude'),workflowValue('wfVersion','0.1.0'),workflowValue('wfFormula')]);audit('创建规则',workflowValue('wfName'),'草稿');message='规则草稿已创建并进入测试队列';}
+      else if(action==='importRule'){state.created.rules.push(['导入规则包','来自签名规则包，等待契约校验。','版本冲突与未签名依赖','0.1.0','imported']);audit('导入规则包','导入规则包','草稿');message='规则包已导入为草稿';}
+      else if(action==='createDetector'){state.created.detectors.push([workflowValue('wfId'),workflowValue('wfName'),workflowValue('wfRuntime'),workflowValue('wfVersion'),'0 / 0','草稿']);audit('注册检测器',workflowValue('wfId'),workflowValue('wfImage'));message='检测器已注册，发布前需通过回归门禁';}
+      else if(action==='registerParser'){state.created.parsers.push([workflowValue('wfId'),workflowValue('wfName'),workflowValue('wfFormat'),workflowValue('wfVersion'),'待测试','草稿']);audit('注册解析器',workflowValue('wfId'),workflowValue('wfFail'));message='解析器已注册为草稿';}
+      else if(action==='createCapability'){state.created[state.route].push(workflowValue('wfName'));audit('创建能力',workflowValue('wfName'),state.route);message='能力草稿已创建';}
+      else if(action==='createAdmin'){state.created[state.route].push([workflowValue('wfName'),workflowValue('wfType'),workflowValue('wfTarget'),workflowValue('wfStatus','草稿')].join('|'));audit('创建管理对象',workflowValue('wfName'),state.route);message='管理对象已创建';}
+      else if(action==='addNode'){state.created.nodes.push([workflowValue('wfName'),workflowValue('wfRole'),'0%','0%','0','刚刚','在线']);audit('新增节点',workflowValue('wfName'),workflowValue('wfAddress'));message='节点已完成登记并通过首次心跳';}
+      else if(action==='more'){const chosen=byId('workflowBody').querySelector('input[name="wfMore"]:checked');const op=chosen?chosen.value:'version';const r=reportRows.find(x=>x.id===id);if(r){if(op==='version')r.version=`v${(parseFloat(r.version.slice(1))+.1).toFixed(1)}`;if(op==='sign')r.status='待签名';if(op==='archive')r.status='已封存';}audit('报告更多操作',id,op);message='报告状态与版本已更新';}
+      else if(action==='adminMore'){const chosen=byId('workflowBody').querySelector('input[name="wfAdminMore"]:checked');const op=chosen?chosen.value:'scope';audit('管理对象操作',id,`${op}：${workflowValue('wfNote')}`);message='管理操作已提交并进入审计记录';}
+      byId('workflowModal').classList.remove('open'); render(); toast(message,'变更已写入当前会话审计记录。');
+    }
+    function bindSearch() {
+      const input=content.querySelector('[data-table-search]');
+      const applyFilters=()=>{const q=(input?.value||'').trim().toLowerCase();const filters=[...content.querySelectorAll('[data-table-filter]')].map(x=>x.value).filter(v=>!v.startsWith('全部'));content.querySelectorAll('[data-filter-table] tbody tr').forEach(tr=>{const text=tr.textContent.toLowerCase();tr.style.display=text.includes(q)&&filters.every(v=>text.includes(v.toLowerCase()))?'':'none';});};
+      if(input) input.addEventListener('input',e=>{input.value=e.target.value;applyFilters();});
+      content.querySelectorAll('[data-table-filter]').forEach(select=>select.addEventListener('change',applyFilters));
+      const cardInput=content.querySelector('[data-card-search]');
+      if(cardInput) cardInput.addEventListener('input',e=>{const q=e.target.value.trim().toLowerCase();content.querySelectorAll('[data-filter-cards] .entity-card').forEach(card=>card.style.display=card.textContent.toLowerCase().includes(q)?'':'none');});
+    }
+
+    document.addEventListener('click',e=>{
+      const routeEl=e.target.closest('[data-route]');
+      const route=routeEl?.dataset.route;
+      if(route) { if(route==='project-detail'&&routeEl.dataset.id)state.selectedProjectId=routeEl.dataset.id;if((route==='finding-detail'||route==='review')&&routeEl.dataset.id)state.selectedFindingId=routeEl.dataset.id;setRoute(route); return; }
+      const actionEl=e.target.closest('[data-action]');
+      const action=actionEl?.dataset.action;
+      const recordId=actionEl?.dataset.id||'';
+      if(action==='openScan') openWizard();
+      else if(action==='closeModal') byId('scanModal').classList.remove('open');
+      else if(action==='wizardPrev') { state.wizard=Math.max(1,state.wizard-1); renderWizard(); }
+      else if(action==='wizardNext') { if(state.wizard<3){state.wizard++;renderWizard();}else{const id=`PA-RUN-${new Date().toISOString().slice(5,10).replace('-','')}-${String(runRows.length+27).padStart(3,'0')}`;runRows.unshift({id,project:'新建论文筛查',stage:'材料预检',progress:'2%',coverage:'等待冻结快照',elapsed:'刚刚',status:'运行中'});audit('创建筛查任务',id,`${state.source} / ${state.strategy}`);byId('scanModal').classList.remove('open');toast('筛查任务已创建',`${id} 已进入材料预检队列。`);setRoute('runs');} }
+      else if(action==='notifications') byId('noticePopover').classList.toggle('open');
+      else if(action==='readAll') { byId('noticePopover').classList.remove('open'); document.querySelector('.notify-dot').style.display='none'; toast('通知已全部标记为已读'); }
+      else if(action==='mobileMenu') byId('sidebar').classList.toggle('open');
+      else if(action==='openProject') {if(recordId)state.selectedProjectId=recordId;setRoute('project-detail');}
+      else if(action==='openFinding') {if(recordId)state.selectedFindingId=recordId;setRoute('finding-detail');}
+      else if(action==='explainFinding') { const note=byId('reviewNote')?.value||'';const finding=findings.find(x=>x.id===state.selectedFindingId)||findings[0];state.reviewStatus='已解释';finding.status='已解释';audit('人工裁定',finding.id,`已解释：${note}`);toast('线索已标记为已解释','复核记录已追加，原始检测证据保持不变。'); render(); }
+      else if(action==='escalateFinding') { const note=byId('reviewNote')?.value||'';const finding=findings.find(x=>x.id===state.selectedFindingId)||findings[0];state.reviewStatus='升级人工核验';finding.status='升级人工核验';audit('人工裁定',finding.id,`升级人工核验：${note}`);toast('已升级人工核验','已通知科研审查负责人，并锁定当前证据快照。'); render(); }
+      else if(action==='exportReport'||action==='export'||action==='downloadAsset') exportCurrent(recordId);
+      else if(action==='pause'||action==='resume'||action==='retry') { const task=runRows.find(r=>r.id===recordId);if(task){task.status=action==='pause'?'已暂停':'运行中';if(action==='retry'){task.progress='1%';task.stage='恢复检查点';}audit(action==='pause'?'暂停任务':action==='resume'?'继续任务':'重试任务',recordId,'保留原运行记录');render();toast(task.status,`${recordId} 的检查点和原运行记录已保留。`);}else{openWorkflow('testParser',recordId||'失败文件重解析');} }
+      else if(action==='saveSettings') { content.querySelectorAll('[data-setting]').forEach(el=>state.settings[el.dataset.setting]=el.value);audit('保存设置',state.route,JSON.stringify(state.settings));toast('设置已保存','新建任务将使用更新后的默认策略。');render(); }
+      else if(action==='closeWorkflow') byId('workflowModal').classList.remove('open');
+      else if(action==='submitWorkflow') submitWorkflow();
+      else if(['addMaterial','generateReport','batchAssign','createRule','importRule','createDetector','registerParser','createCapability','createAdmin','addNode','log','previewReport','more','adminMore','ruleDetail','detectorDetail','parserDetail','capabilityDetail','adminDetail','ingestDetail','previewAsset','testDetector','testParser'].includes(action)) openWorkflow(action,recordId);
+      const source=e.target.closest('[data-source]')?.dataset.source; if(source){state.source=source;renderWizard();}
+      const strategy=e.target.closest('[data-strategy]')?.dataset.strategy; if(strategy){state.strategy=strategy;renderWizard();}
+      if(e.target.closest('[data-select-all]')) content.querySelectorAll('[data-finding-select]').forEach(x=>x.checked=e.target.checked);
+    });
+    byId('consoleSelect').addEventListener('change',e=>{state.console=e.target.value;state.route=consoles[state.console].routes[0][0];history.replaceState(null,'','#'+state.route);render();});
+    byId('scanModal').addEventListener('click',e=>{if(e.target===byId('scanModal'))byId('scanModal').classList.remove('open');});
+    byId('workflowModal').addEventListener('click',e=>{if(e.target===byId('workflowModal'))byId('workflowModal').classList.remove('open');});
+    document.addEventListener('keydown',e=>{if(e.key==='Escape'){byId('scanModal').classList.remove('open');byId('workflowModal').classList.remove('open');byId('noticePopover').classList.remove('open');}});
+    document.querySelector('[data-action="mobileMenu"]').innerHTML=icon('menu');
+    document.querySelector('[data-action="notifications"]').insertAdjacentHTML('afterbegin',icon('bell'));
+    document.querySelector('[data-action="closeModal"]').innerHTML=icon('close');
+    document.querySelector('[data-action="closeWorkflow"]').innerHTML=icon('close');
+    const initial=location.hash.slice(1); if(initial&&routeMeta[initial]) state.route=initial;
+    const initialConsole=Object.entries(consoles).find(([,c])=>c.routes.some(r=>r[0]===state.route)); if(initialConsole) state.console=initialConsole[0];
+    render();
+  </script>
+</body>
+</html>

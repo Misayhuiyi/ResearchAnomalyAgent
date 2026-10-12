@@ -1,0 +1,13 @@
+# DeepSeek V4.1 Flash 接入说明
+
+官方[模型列表](https://api-docs.deepseek.com/api/list-models/)将展示名 `DeepSeek-V4.1-Flash` 对应 API 标识 `deepseek-flash`；基础地址为 `https://api.deepseek.com`。[官方定价](https://api-docs.deepseek.com/quick_start/pricing/)存在峰/谷时段及缓存差异。本项目以 2026-10-11 核验的峰时、缓存未命中输入 0.30 美元/百万 tokens、输出 1.20 美元/百万 tokens 作保守上限；2026-11-11 UTC 后必须重新核价。
+
+Windows PowerShell 当前会话可以设置 `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DEEPSEEK_MODEL`；环境变量优先于本机加密配置。地址和模型仅允许上述官方值。`.env.example` 只是填写示例，程序不会自动读取 `.env`。不想设置环境变量，可在仓库根目录交互运行 `python tools/configure_local_model.py`；密钥隐藏输入，经 Windows DPAPI 加密保存到 `%LOCALAPPDATA%\PaperAudit\DeepSeek\model.json`，不在仓库。密钥一旦在聊天或其他渠道暴露，建议撤销后换新。
+
+付费流程：打开某条扫描线索 → 点“查看预计费用” → 用户核对上限 → 点“确认并生成解释” → 接口只收到该条的类型、位置、关系式、命中数量及最多 3 组/4 个原始数值样本。完整 PDF、Word、数据表和全量 PaperConan 输出不会发送。旧版按整篇分段发送的计划已停用；旧授权不能自动移用到新的发送范围。
+
+服务在发送前持久化授权和预留金额。HTTP 429 明确拒绝时最多重试一次；超时、5xx 或用量不明时不盲目重发，并将费用标记为待核对。响应 JSON、模型标识、用量、字段形状均会校验；失败只影响这条辅助解释，不影响确定性扫描。保存的解释带检查/线索/证据摘要哈希及模型标识、耗时、用量；模型不能修改人工复核记录。
+
+解释只用于通俗说明、可能的合理原因和人工核验建议。固定提示：**异常是待复核统计信号，不代表科研不端结论，也不能判断作者意图。**
+
+一次真实冒烟使用公开 Gorman 2014 论文与数据，模型返回正常格式及用量但建议为空，故只证明连接、认证和费用账本可运行，不能证明解释效果。详见[验收报告](08_测试验收报告.md)。

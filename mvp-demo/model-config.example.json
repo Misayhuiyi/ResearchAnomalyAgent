@@ -1,0 +1,14 @@
+{
+  "endpoint": "https://api.deepseek.com",
+  "verified_model_name": "DeepSeek-V4.1-Flash",
+  "valid_until": null,
+  "price": {
+    "model": "deepseek-flash",
+    "version": "DeepSeek V4.1 Flash",
+    "currency": "CNY",
+    "unit": "per_million_tokens",
+    "input": null,
+    "output": null,
+    "reference": ""
+  }
+}
