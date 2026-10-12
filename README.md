@@ -63,4 +63,4 @@ prototypes/         历史 UI 参考；运行页面以 mvp-demo/static 为准
 
 佰茵云账户认证、租户隔离、平台存储、任务调度、部署和联调由平台方后续完成，见[接入清单](docs/product/09_平台接入清单.md)。本地账号不是平台身份，不能直接对外网开放。
 
-第三方：PaperConan 0.8.5（MIT）为扫描依赖，DeepSeek 为外部付费 API；其他 Python 依赖及许可说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。未把 PaperConan 上游源码复制进仓库。
+第三方：PaperConan 0.8.5（MIT）为扫描依赖，DeepSeek 为外部付费 API；其他 Python 依赖及许可说明见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md)。未把 PaperConan 上游源码复制进仓库。历史材料的移动、缓存清理和未移动项见[目录整理清单](docs/product/11_目录整理清单.md)。
