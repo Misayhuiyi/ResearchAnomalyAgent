@@ -8,7 +8,13 @@ from pathlib import Path
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-sys.path.insert(0, str(ROOT / "mvp-demo"))
+service_root=ROOT/'mvp-demo'
+if os.environ.get('PAPER_AUDIT_DELIVERY'):
+    package=Path(os.environ['PAPER_AUDIT_DELIVERY']).resolve()
+    if package.parent!=ROOT/'delivery' or not package.name.startswith('PaperAudit-'):
+        raise SystemExit('Select a local candidate under delivery.')
+    service_root=package/'PaperAudit_Coding'/'Code'/'DataCode'
+sys.path.insert(0, str(service_root))
 import app
 import public_materials
 import agent_service

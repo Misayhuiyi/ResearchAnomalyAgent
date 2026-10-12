@@ -44,7 +44,7 @@ cd mvp-demo
 
 浏览器验收脚本位于 `tools/`，必须对隔离的测试端口运行；`tools/serve_ai_mock.py` 和 `tools/verify_ai_browser.cjs` 只使用 Mock 模型，绝不调用付费接口。最新实测数量、真实 API 冒烟和未覆盖风险见[测试验收报告](docs/product/08_测试验收报告.md)。
 
-本轮回归：后端 **186/186**、交付包浏览器 **8/8**、AI 浏览器（Mock）**4/4**，四组件合成样例实际运行均成功。原 32 项规范提示的逐项处理见[本地交付范围验收](docs/product/12_佰茵云本地交付验收.md)。
+修复后验证共255项通过，含后端210项、12案页面流程、12案原值核对、8案Mock解释和1次失败隔离、2案参考版本核对、10条此前真实回复导出检查。各项范围及历史失败记录见[修复验收](docs/product/14_问题修复与版本核对验收.md)。本次重新打包的独立验证见[最新交付记录](docs/product/15_V2.4交付与发布记录.md)，不把Mock或旧回复计作新的真实调用。
 
 ## 佰茵云目录交付
 
@@ -55,7 +55,9 @@ python -m pip install -r mvp-demo/requirements.txt -r tools/requirements-build.t
 python tools/build_delivery.py
 ```
 
-在 `delivery/PaperAudit-时间戳/` 生成 Coding、Agent、AgentRun、AgentOM 四个同级组件及等内容的 Word/HTML/Markdown 说明。Coding 内仅有 `Code/Data/TempData/Result`；运行批处理入口 `python Code/PaperAudit.py`。交互工作台入口为 Agent 内的 `python harness/Workbench.py`，管理员可用 `PAPER_AUDIT_PORT` 设置本机端口。批处理读取材料及三项可选参数，不自动调用模型；DOI 和逐条费用确认通过工作台完成。
+在 `delivery/PaperAudit-时间戳/` 生成 Coding、Agent、AgentRun、AgentOM 四个同级组件及等内容的 Word/HTML/Markdown 说明；最新V2.4蓝图、教程及接入说明在Coding/Data/ProductDocs。Coding 内仅有 `Code/Data/TempData/Result`；运行批处理入口 `python Code/PaperAudit.py`。交互工作台入口为 Agent 内的 `python harness/Workbench.py`，管理员可用 `PAPER_AUDIT_PORT` 设置本机端口。批处理读取材料及三项可选参数，不自动调用模型；DOI、参考版本核对和逐条费用确认通过工作台完成。
+
+Word更新由 `tools/update_product_docs.py` 从保留的V2.3版式及现行教程内容生成V2.4，不覆盖原件。打包与文档构建需要 `tools/requirements-build.txt`；生成包、真实论文、运行数据和密钥都不上传GitHub，仓库只保留可复现构建源码及文档。
 
 ## 目录与接口
 
@@ -69,11 +71,19 @@ prototypes/         历史 UI 参考；运行页面以 mvp-demo/static 为准
 .agents/            原工作流模板及按需加载技能
 ```
 
-主要 API：`GET /api/health`；`POST /api/jobs`、`GET /api/jobs[/{id}]`；`POST /api/materials/discover`、`/api/materials/import`；`GET /artifact/{scan}/result.json`、`/scan.json`、`/report.html`；`GET /api/explanations/{scan}/{finding}`、`POST /api/explanations/quote`、`/api/explanations/run`；`GET /api/reviews/{scan}`、`POST /api/reviews`、`/api/reports`。操作步骤见[使用教程](docs/product/03_使用教程.md)。
+主要 API：`GET /api/health`；`POST /api/jobs`、`GET /api/jobs[/{id}]`；`POST /api/materials/discover`、`/api/materials/import`；`GET /artifact/{scan}/result.json`、`/scan.json`、`/report.html`；`GET /api/explanations/{scan}/{finding}`、`POST /api/explanations/quote`、`/api/explanations/run`；`GET /api/reviews/{scan}`、`POST /api/reviews`、`/api/reports`；`POST /api/reference/preview`、`/api/reference/compare`和`GET /api/reference/{scan}`。操作步骤见[使用教程](docs/product/03_使用教程.md)和[建设蓝图V2.4](docs/product/02_论文科研数据异常筛查Agent建设蓝图_V2.4.docx)。
+
+## 多论文测试集
+
+本机 `test-corpus/测试集导航.html` 保留 5 篇真实论文、原版/修正版及人工对照，共 12 个可直接上传的案例。双击同目录 `打开检查工具.cmd` 可打开工具和导航。修复后记录在 `test-results/2026-10-11-fixes-final/`；此前真实模型回复及新生成的含解释报告在 `test-results/2026-10-11-multipaper-v1/`。原材料与模型响应不公开提交。
+
+准备：`python tools/prepare_paper_corpus.py`。免费重跑：`python tools/run_paper_corpus.py --node node --port 8897`（需要 Playwright/Chromium，可用 `--node-modules` 指定包目录）。不会调用付费模型，结果不覆盖旧轮次。
+
+新增“与参考版本核对”：明确选择原表/参考表、工作表、匹配编号和核对列；没有唯一编号时需确认数据顺序一致。Iris 的 3 处差异及运动实验 K6 的 1 处差异均完成真实核对、导出和重开验证。单靠统计扫描仍不保证识别孤立错误；参考版本也不自动视为正确。编号数列不再列为测量异常；PDF 区分文字可读、表格未读和加密/扫描边界。已保存 AI 解释会合入新生成的四格式报告，旧报告不改写。详见[修复验收](docs/product/14_问题修复与版本核对验收.md)，历史证据见[原测试集记录](docs/product/13_多论文测试集与验收记录.md)。
 
 ## 数据安全与边界
 
-本地服务只监听回环地址；上传文件、SQLite、扫描产物和模型用量记录位于忽略提交的 `runtime/`。请勿把真实论文材料、运行目录、密钥或报告产物推送到公开仓库。模型输出是可追溯的辅助说明，不会修改 PaperConan 检测结果或人工复核决定。PDF 图片/扫描件不做 OCR；导入的公开页面可能因站点限制失败；高密度 100 MB 数据尚未通过容量验收。真实模型已在内置合成样例上完成一次逐条解释及页面读取测试；**真实论文解释质量、跨类型稳定性和实际账单仍未验收**。
+本地服务只监听回环地址；上传文件、SQLite、扫描产物和模型用量记录位于忽略提交的 `runtime/` 或本机 `test-results/`。请勿把真实论文材料、运行目录、密钥或报告产物推送到公开仓库。模型输出和参考版本核对都是可追溯的辅助说明，不会修改 PaperConan 检测结果或人工复核决定。版本核对支持 CSV、TSV、XLSX、XLSM；单参考文件20MB、一轮最多20份/100MB，解析最多20万单元格；不能唯一匹配、公式无缓存或超出范围时明确拒绝/标部分，不强行比较。PDF 图片/扫描件不做 OCR，不解密；区间复合文字不当作原始观测扫描。高密度 100 MB 全量扫描容量、领域模型质量、随机稳定性和真实账单仍未验收。
 
 佰茵云账户认证、租户隔离、平台存储、任务调度、部署和联调由平台方后续完成，见[接入清单](docs/product/09_平台接入清单.md)。本地账号不是平台身份，不能直接对外网开放。
 

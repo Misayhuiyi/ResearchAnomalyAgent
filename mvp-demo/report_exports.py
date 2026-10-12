@@ -39,7 +39,7 @@ def evidence_rows(finding):
                 yield base + ['', finding.get('file'), finding.get('sheet'), row.get('row_idx'), headers[index] if index < len(headers) else str(index+1), value, '']
 
 
-def sections(snapshot):
+def sections(snapshot,full_reference=False):
     result, review = snapshot['result'], snapshot['review']
     reviews = review['reviews']
     findings = result.get('findings', [])
@@ -60,7 +60,9 @@ def sections(snapshot):
                  for m in result.get('material_sources', [])]
     output.append(('材料来源', ['材料', '来源', '内容校验', '字节数'], materials))
     output.append(('材料读取', ['材料', '读取情况', '说明'], [
-        [m.get('filename'), {'read':'已读取','partial':'部分读取','failed':'读取失败','unread':'未读取'}.get(m.get('status'),'未确认'),m.get('reason_cn','')]
+        [m.get('filename'), ('文字已读，数值表未读' if not m.get('numeric_cells') and (m.get('pdf_reading') or {}).get('status')=='text'
+            else '扫描件暂不支持' if (m.get('pdf_reading') or {}).get('status')=='scanned'
+            else {'read':'已读取','partial':'部分读取','failed':'读取失败','unread':'未读取'}.get(m.get('status'),'未确认')),m.get('reason_cn','')]
         for m in result.get('materials', [])]))
     output.append(('核对范围', ['材料', '数据表', '核对项目', '状态', '计算口径', '未完成原因'], [
         [c.get('file'), c.get('sheet'), c.get('name'), {'checked':'已核对','partial':'部分核对','insufficient':'条件不足','unsupported':'暂不支持','failed':'未完成'}.get(c.get('status'), '未确认'),
@@ -76,6 +78,30 @@ def sections(snapshot):
             raise ReviewError('报告原始值超过导出容量，请拆分材料；本次未生成完整报告。')
     output.append(('核对项目', ['编号', '项目', '位置', '核对结果', '计算关系', '同位置的其他关系', '复核状态', '复核依据', '原始值范围'], found))
     output.append(('原始值', ['编号', '项目', '组别', '文件', '数据表', '行号', '列名', '原始值', '保留1位小数后'], evidence))
+    ai_rows=[]
+    for item in (snapshot.get('finding_ai') or {}).get('items',[]):
+        explanation=item.get('explanation') or {}
+        if item.get('status')=='completed':
+            ai_rows.append([item['finding_id'],explanation['what'],explanation['why'],
+                            '；'.join(explanation['benign_explanations']),'；'.join(explanation['check_steps']),
+                            explanation['report_summary'],explanation['disclaimer']])
+        else:ai_rows.append([item['finding_id'],item.get('message','未生成解释'),'','','','','不能由统计信号判断科研不端或作者意图。'])
+    if ai_rows:output.append(('辅助解释', ['线索编号','发现了什么','为什么需要核对','可能的合理原因','建议的人工核验','摘要','使用边界'],ai_rows))
+    references=(snapshot.get('reference_review') or {}).get('items',[])
+    if references:
+        coverage=[];differences=[]
+        for item in references:
+            coverage.append([item['source_file'],item['source_sheet'],item['reference_file'],item['reference_sheet'],
+                '按唯一编号匹配' if item['matching']=='key' else '已确认数据顺序一致',item['matched_rows'],
+                len(item['unmatched_rows']),item['differences_total'],
+                '完整' if item['status']=='complete' else '部分完成；请核对未匹配或超出明细上限的部分',item['boundary']])
+            subset=item['differences'] if full_reference else item['differences'][:100]
+            for cell in subset:
+                a,b=cell['source'],cell['reference']
+                differences.append([a['file'],a['sheet'],a['row'],a['column'],a['column_idx'],a['value'],b['file'],b['sheet'],b['row'],b['column'],b['column_idx'],b['value']])
+        output.append(('参考版本核对', ['原文件','原工作表','参考文件','参考工作表','匹配方式','对应数据行','未匹配数据行','数值差异','读取范围','使用边界'],coverage))
+        output.append(('版本数值差异', ['原文件','原工作表','原行号','原列名','原列号','原值','参考文件','参考工作表','参考行号','参考列名','参考列号','参考值'],differences))
+        output.append(('版本核对明细范围', ['项目','内容'],[['说明','Excel 列出已保存的完整差异（最多5000处）；Word/PDF/HTML 每组列出前100处，全部差异也可在工作台导出 JSON。只说明数值不同，不自动判定哪一版正确。']]))
     content = snapshot.get('content_review') or {}
     if content.get('budget_id'):
         output.append(('内容核对范围', ['项目','内容'], [
@@ -228,7 +254,7 @@ def export_snapshot(store, actor, snapshot):
         tables = sections(current)
         folder.mkdir(parents=True, exist_ok=True)
         for name, writer in [('report.html',write_html),('report.docx',write_docx),('report.pdf',write_pdf),('details.xlsx',write_xlsx)]:
-            writer(folder / name, tables)
+            writer(folder / name, sections(current,full_reference=True) if name=='details.xlsx' else tables)
         manifest = {'snapshot_hash': current['snapshot_hash'], 'files': {
             name: hashlib.sha256((folder/name).read_bytes()).hexdigest() for name in sorted(FILES)}}
         pending = folder/'manifest.pending'

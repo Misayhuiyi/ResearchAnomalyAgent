@@ -48,7 +48,7 @@ def adjudicate(issue):
       'DOC-STALE-NAME':('false_positive','Workbench.py is the existing no-argument peer component entry'),
       'DOC-CROSS-输入':('false_positive','Independent Word/HTML cells match; raw parser appended a folder child to Word rows'),
       'IO-CONTRACT-UNDOCUMENTED-SAMPLE-002':('false_positive','Synthetic CSV belongs to the documented Materials folder-upload container'),
-      'IO-001':('fixed','Packaged app is a service module; development CLI omitted without changing function bodies'),
+      'IO-001':('verified','Coding and Workbench accept no user CLI; only the resource-limited PDF probe child receives a private system-generated filepath in sys.argv'),
       'IO-CONTRACT-CODE-005':('fixed','Unsupported batch Reference.txt was removed; DOI remains a workbench function'),
       'AGENTOM-CHANGELOG':('fixed','Actual reproduction stores and compares source hashes before and after'),
       'AGENTOM-REVIEW':('fixed','No automatic mutation/publication endpoint; external source change blocks the result'),
@@ -144,7 +144,7 @@ def verify(package, evidence, audit=None, baseline=None):
             'passed':len(checks),'failed':0,'checks':checks,'raw_audit_adjudication':findings,
             'baseline_adjudication':baseline_rows,
             'platform_exclusions':['login and tenants','storage and task dispatch','forum submission and replies','container deployment and hostile-code sandbox'],
-            'human_effect_acceptance':'pending user/domain review','model_quality':'single synthetic live call previously passed; no new paid calls'}
+            'human_effect_acceptance':'pending user/domain review','model_quality':'prior multi-paper live replies recorded separately; no new paid calls in packaging verification'}
     evidence.mkdir(parents=True,exist_ok=True)
     (evidence/'local-scope-acceptance.json').write_text(json.dumps(result,ensure_ascii=False,indent=2),encoding='utf-8')
     version.update(acceptance='local_scope_verified',platform_acceptance='pending',

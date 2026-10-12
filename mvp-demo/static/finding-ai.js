@@ -69,6 +69,7 @@
     try {
       const ai = await request('/api/explanations/quote', {scan_id:selected.scan, finding_id:selected.finding});
       if (active === selected) render(ai);
+      window.dispatchEvent(new Event('finding-ai-changed'));
     } catch (error) {
       if (active === selected) el('aiStatus').textContent = error.message;
     } finally { busy = false; el('aiQuoteBtn').disabled = false; }
@@ -84,6 +85,7 @@
         quote_id:approved.quote_id, request_key:crypto.randomUUID(), confirmed:true
       });
       if (active === selected) render(ai);
+      window.dispatchEvent(new Event('finding-ai-changed'));
     } catch (error) {
       if (active === selected) el('aiStatus').textContent = error.message;
     } finally { busy = false; el('aiConfirmBtn').disabled = false; }

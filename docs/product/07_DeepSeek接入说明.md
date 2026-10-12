@@ -1,5 +1,7 @@
 # DeepSeek V4.1 Flash 接入说明
 
+最新多论文轮次：10 个有线索案例各实际调用 1 次，最终都能显示、保存、重开。首次 1 条否定句被误拦截，校验修复后重用已结算回复恢复，未二次付费；保守费用账本合计 0.005419 美元。后续修复已将保存的解释合入新冻结四格式报告，并用这10条原回复验证，新增收费调用0。只证明这些线索的接口、显示、导出闭环，领域质量、重复波动和服务方账单仍待验收。详见[修复验收](14_问题修复与版本核对验收.md)，首次证据见[多论文记录](13_多论文测试集与验收记录.md)。
+
 官方[模型列表](https://api-docs.deepseek.com/api/list-models/)将展示名 `DeepSeek-V4.1-Flash` 对应 API 标识 `deepseek-flash`；基础地址为 `https://api.deepseek.com`。[官方定价](https://api-docs.deepseek.com/quick_start/pricing/)存在峰/谷时段及缓存差异。本项目以 2026-10-11 核验的峰时、缓存未命中输入 0.30 美元/百万 tokens、输出 1.20 美元/百万 tokens 作保守上限；2026-11-11 UTC 后必须重新核价。
 
 Windows PowerShell 当前会话可以设置 `DEEPSEEK_API_KEY`、`DEEPSEEK_BASE_URL`、`DEEPSEEK_MODEL`；环境变量优先于本机加密配置。地址和模型仅允许上述官方值。`.env.example` 只是填写示例，程序不会自动读取 `.env`。不想设置环境变量，可在仓库根目录交互运行 `python tools/configure_local_model.py`；密钥隐藏输入，经 Windows DPAPI 加密保存到 `%LOCALAPPDATA%\PaperAudit\DeepSeek\model.json`，不在仓库。密钥一旦在聊天或其他渠道暴露，建议撤销后换新。

@@ -52,7 +52,8 @@ SECTIONS=[
  ('应用场景',['研究人员自查论文数据，编辑或科研管理人员核对作者提供的材料。上传前应确认有权处理材料，并获得向外部模型发送相关片段的必要授权。扫描 PDF 和图像表格不在本版范围。']),
  ('使用说明',['在工作台选择材料或查找公开下载链接。确认材料属于同一篇论文，并仅勾选满足前提的核对项目。检查结束后先查看读取范围，再逐项核对原始数据。',
    '选择一条线索，核对原始数值和数学关系。需要辅助说明时，查看本条将发送的摘要及费用上限，再确认生成解释。解释包含可能的正常原因和人工核验步骤；调用未完成时仍可查看原始检查结果。',
-   '填写人工复核后生成报告。四种格式来自同一冻结版本。补充或更正材料时建立新版本，不继承旧版本的复核结论。',
+   '填写人工复核后生成报告。四种格式来自同一冻结版本，收录已保存的逐条智能解释和参考版本差异，不重复付费调用。旧冻结报告不会自动更新，补充或更正材料时建立新版本，不继承旧版本的复核结论。',
+   '需要核对孤立录入差异时，在工作台选择原表与参考文件，明确双方工作表、匹配编号和核对列。没有编号需确认数据顺序一致。参考核对仅支持 CSV、TSV、XLSX、XLSM；显示双方位置与完整原值，重复/空白编号拒绝，未匹配或超限范围明确提示，不能自动判断哪版正确。',
    '批处理入口只执行数值检查和初始报告；交互式费用确认、人工复核和历史记录通过工作台完成。']),
  ('参考文献',['PaperConan 0.8.5 软件包：本项目调用的数值异常筛查引擎。概要为在输入数据中查找可进一步核对的数值关系；本项目补充原始证据定位、覆盖说明和人工复核。具体算法和适用条件以随包规则目录及本项目 Spec 为准。',
    '《人人都能成为“耿同学”：开源工具 PaperConan 介绍》。文章摘要：通过确定性数值检查定位源数据线索，再结合原表、图注和研究方法核对共享对照、单位换算等合理解释。与本应用的关系是将计算、原文依据和人工复核分开，不据统计信号直接判断作者意图。原文：https://mp.weixin.qq.com/s/G6uB_0PXjywlrKOI93PvBA 。',
@@ -160,6 +161,19 @@ def main():
     shutil.copytree(inputs,coding/'Data'/'Demo'/'TempData')
     shutil.copy2(SOURCE/'requirements.txt',coding/'Data'/'requirements.txt')
     shutil.copy2(ROOT/'THIRD_PARTY_NOTICES.md',coding/'Data'/'THIRD_PARTY_NOTICES.md')
+    # Publishable documentation only; never copy test-corpus, runtime or local
+    # credentials. All run evidence belongs to separate verification directories.
+    product_docs=coding/'Data'/'ProductDocs'
+    for name in ['02_论文科研数据异常筛查Agent建设蓝图_V2.4.docx',
+                 '03_使用教程_V2.4.docx','03_使用教程.md',
+                 '04_蓝图_UI_验收对照.md','07_DeepSeek接入说明.md',
+                 '08_测试验收报告.md','09_平台接入清单.md',
+                 '13_多论文测试集与验收记录.md','14_问题修复与版本核对验收.md',
+                 '15_V2.4交付与发布记录.md']:
+        source=ROOT/'docs'/'product'/name
+        if not source.is_file():raise FileNotFoundError('Update product documents before packaging: '+name)
+        product_docs.mkdir(parents=True,exist_ok=True)
+        shutil.copy2(source,product_docs/name)
     put(coding/'Data'/'模型配置说明.md','# 模型配置说明\n\n优先读取 DEEPSEEK_API_KEY、DEEPSEEK_BASE_URL、DEEPSEEK_MODEL 环境变量。官方地址为 https://api.deepseek.com，模型标识 deepseek-flash 对应 DeepSeek V4.1 Flash。Windows 管理员可在交互终端运行 Coding/Code/DataCode/OperatorConfigureModel.py，隐藏输入并加密保存到当前用户的本机目录；不要将密钥放入交付包。每条线索在工作台确认保守费用上限后，才发送最多 3000 字节的证据摘要。批处理不会调用模型。详见 https://api-docs.deepseek.com/quick_start/pricing/ 。\n')
     put(coding/'Data'/'本地运维说明.md','# 本地运维说明\n\n工作台仅供本机单用户使用，状态位于 Agent/Result/WorkbenchState。同一状态目录只能运行一个实例。停止服务后应备份完整状态目录，包含输入材料证据、扫描、复核和费用记录。模型超时不自动重发；服务方账单经人工核对后，可由管理员通过 Coding/Code/DataCode/OperatorReconcile.py 对账。平台身份、存储、论坛和容器调度由平台方接入。\n')
     shutil.copy2(ROOT/'tools'/'reconcile_model_bill.py',core/'OperatorReconcile.py')

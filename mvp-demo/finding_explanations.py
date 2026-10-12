@@ -82,7 +82,7 @@ def validate_explanation(content: object) -> dict:
     combined=encode(content)
     # Accept narrowly negated boundary statements, while still blocking an
     # affirmative misconduct conclusion elsewhere in the same explanation.
-    wording=re.sub(r'(?:不代表|不构成|不意味着|不等于|不能(?:据此)?(?:认定|判定|证明)|'
+    wording=re.sub(r'(?:不代表|不构成|不意味着|不等于|不能(?:据此)?(?:认定|判定|证明|判断(?:存在)?)|'
                    r'不足以(?:认定|判定|证明)|无法(?:认定|判定|证明)|不得(?:认定|判定))'
                    r'\s*(?:科研不端|学术不端)(?:结论)?','',combined)
     if any(term in wording for term in ('造假','作弊','篡改','伪造','故意操纵','科研不端','学术不端','欺诈')):
@@ -134,6 +134,26 @@ class FindingExplanationService:
                 'held_micros':budget['held'],'estimated_max_micros':row['estimated_max_micros'],
                 'source_hash':row['source_hash'],'evidence_hash':row['evidence_hash'],
                 'model':row.get('model')}
+
+    def report_context(self, actor, scan):
+        """Freeze saved, owner-bound explanations without configuration or paid calls."""
+        with LOCK:
+            with self.reviews.connect() as db:
+                source=self.reviews._scan(db,actor,scan)
+                result=json.loads(source['source'])
+            items=[]
+            for finding in result.get('findings',[]):
+                row=self._read(actor,scan,finding['id'])
+                if not row:continue
+                if row['status']=='running':raise Conflict('辅助解释仍在生成，请完成后再生成报告。')
+                if row['source_hash']!=source['source_hash'] or row['evidence_hash']!=digest([VERSION,PROMPT,minimal_evidence(finding)]):
+                    raise Conflict('已有解释与当前线索不一致，暂不能合入报告。')
+                item={'finding_id':finding['id'],'status':row['status'],
+                      'source_hash':row['source_hash'],'evidence_hash':row['evidence_hash'],'model':row.get('model')}
+                if row['status']=='completed':item['explanation']=validate_explanation({k:v for k,v in row['explanation'].items() if k!='disclaimer'})
+                else:item['message']='未生成辅助解释；数值结果仍可人工核对。'
+                items.append(item)
+            return {'scan_id':scan,'source_hash':source['source_hash'],'items':items}
 
     def quote(self, actor, scan, finding_id):
         config=self.config_loader()

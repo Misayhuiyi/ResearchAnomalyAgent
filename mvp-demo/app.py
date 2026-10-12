@@ -35,6 +35,8 @@ import review_store
 import report_exports
 import agent_service
 import finding_explanations
+import reference_comparison
+from table_sources import recover_headers
 from budget_store import BudgetError
 from model_gateway import ModelError
 from evidence import normalise_cross_finding
@@ -303,6 +305,7 @@ def _load_source_tables(source_path: Path, allowed_sheets: set[str] | None = Non
             tables[source_path.stem] = {
                 "headers": headers, "rows": rows, "limited": limited,
             }
+            recover_headers(tables[source_path.stem])
         return tables
 
     if suffix in {".xlsx", ".xlsm"}:
@@ -324,6 +327,7 @@ def _load_source_tables(source_path: Path, allowed_sheets: set[str] | None = Non
                     remaining -= len(headers) + sum(len(r['values']) for r in rows)
                     if headers:
                         tables[worksheet.title] = {'headers': headers, 'rows': rows, 'limited': limited}
+                        recover_headers(tables[worksheet.title])
             finally:
                 workbook.close()
         except (ImportError, OSError, ValueError, BadZipFile, KeyError):
@@ -445,6 +449,10 @@ def _normalise_finding(
                              for r in evidence_rows if r.get('row_idx') in by_row]
     columns = [item.get("col_a"), item.get("col_b")]
     columns = [str(value) for value in columns if value not in (None, "")]
+    if not columns and item.get('col') not in (None,''):
+        columns=[str(item['col'])]
+        if source_table and isinstance(item.get('col_idx'),int) and 0<=item['col_idx']<len(focus_headers):
+            columns=[str(focus_headers[item['col_idx']])]
     if not columns and source_table and isinstance(item.get('col_idx'), int):
         col_idx = item['col_idx']
         if 0 <= col_idx < len(focus_headers): columns = [str(focus_headers[col_idx])]
@@ -518,12 +526,21 @@ def normalise_scan(
         "block_dups",
     )
     findings: list[dict[str, Any]] = []
+    excluded=[]
     for block in _to_list(scan.get("relations_blocks")):
         if not isinstance(block, dict):
             continue
         for category in finding_groups:
             for item in _to_list(block.get(category)):
                 if isinstance(item, dict):
+                    identifier=(item.get('kind')=='arithmetic_progression' and re.fullmatch(
+                        r'(?i)(?:subject(?:[ _]*(?:id|no\.?))?|participant[ _]*id|sample[ _]*id|patient[ _]*id|id|编号|序号|样本编号|受试者编号)',str(item.get('col','')).strip()))
+                    if item.get('prefilter')=='drop' or identifier:
+                        excluded.append({'file':str(item.get('file') or block.get('file') or ''),
+                                         'sheet':str(item.get('sheet') or block.get('sheet') or ''),'kind':item.get('kind'),
+                                         'columns':[str(item.get('col',''))],'n':item.get('n'),
+                                         'reason_cn':'编号按顺序排列，不作为测量异常。' if identifier else '引擎已判为不应列入待核对的常见数据规律。'})
+                        continue
                     findings.append(
                         _normalise_finding(
                             block,
@@ -563,6 +580,7 @@ def normalise_scan(
         "limitations": _to_list(coverage.get("limitations")),
         "errors": _to_list(scan.get("scan_errors")),
         "findings": findings,
+        "excluded_signals": excluded,
         "artifacts": {
             "raw_scan": f"/artifact/{scan_id}/scan.json",
             "user_report": f"/artifact/{scan_id}/report.html",
@@ -675,7 +693,7 @@ body{{margin:0;background:#f5f7fa;color:#1e293b;font:14px/1.65 "Microsoft YaHei"
 </style></head><body><main><header><h1>科研数据筛查报告</h1><p class="meta">文件：{safe(result['source'])}</p><div class="stats"><div class="stat">文件<b>{safe(summary['files'])}</b></div><div class="stat">数据表<b>{safe(summary['sheets'])}</b></div><div class="stat">数值<b>{safe(summary['numeric_cells'])}</b></div><div class="stat">待核对<b>{safe(summary['findings'])}</b></div></div></header>{provenance_html}{coverage_html}{statistical_html}{findings_html}<footer>结果用于辅助核对，不作违规认定。</footer></main></body></html>"""
 
 
-def _add_material_coverage(result: dict[str, Any], scan: dict[str, Any], filenames: list[str]) -> None:
+def _add_material_coverage(result: dict[str, Any], scan: dict[str, Any], filenames: list[str], pdf_info=None) -> None:
     stats = scan.get("scan_stats") or {}
     files = {str(item.get("file")): item for item in _to_list(stats.get("files")) if isinstance(item, dict)}
     sheets = [item for item in _to_list(stats.get("sheets")) if isinstance(item, dict)]
@@ -700,8 +718,17 @@ def _add_material_coverage(result: dict[str, Any], scan: dict[str, Any], filenam
             status, reason = "partial", "已读取部分数据，部分表格或检查未完成。"
         else:
             status, reason = "read", ""
+        pdf=(pdf_info or {}).get(filename)
+        if pdf and not numeric and not failed:
+            if pdf['status']=='scanned':
+                reason='PDF 没有可读取的文字（可能为扫描页或图片）；本版不做图片识别，请使用配套 Excel/CSV 数据。'
+            elif pdf['status']=='text':
+                reason=('已读取论文文字，但未取得独立数值单元格。图中数值或“均值（区间）”等复合文字未当作原始观察值扫描；请使用配套分列数据。')
+            elif pdf['status']=='encrypted':reason='PDF 带密码保护或编辑限制，本版未读取文字；请使用未加密版本或配套表格。'
+            elif pdf['status']=='limited':reason='论文文字超过本次读取范围，请拆分或使用配套表格。'
+            else:reason='PDF 文字读取未完成；请使用可以直接读取的文字 PDF 或配套表格。'
         materials.append({"filename": filename, "status": status, "sheets": len(related),
-                          "numeric_cells": numeric, "reason_cn": reason})
+                          "numeric_cells": numeric, "reason_cn": reason,**({'pdf_reading':pdf} if pdf else {})})
     engine_status = str(scan.get("scan_status") or "unknown")
     if not any(item["numeric_cells"] for item in materials) or engine_status == "failed":
         status, message = "failed", "未能取得可检查的数据，请查看材料读取情况后重新提交。"
@@ -803,7 +830,18 @@ def scan_files(
         for name, payload in uploads
     ]
     result["summary"]["files"] = len(uploads)
-    _add_material_coverage(result, scan, result["sources"])
+    pdf_info={};pdf_deadline=time.monotonic()+25
+    for name,_ in uploads:
+        if Path(name).suffix.lower()=='.pdf':
+            if cancel_event is not None and cancel_event.is_set():raise ScanCancelled('检查已停止，原始材料仍保留。')
+            if time.monotonic()>=pdf_deadline:
+                pdf_info[name]={'status':'limited'};continue
+            try:
+                probe=subprocess.run([sys.executable,'-X','utf8',str(ROOT/'pdf_read_status.py'),str(input_dir/name)],
+                                     capture_output=True,text=True,encoding='utf-8',timeout=max(.1,pdf_deadline-time.monotonic()),check=True)
+                pdf_info[name]=json.loads(probe.stdout)
+            except (subprocess.SubprocessError,ValueError):pdf_info[name]={'status':'unavailable'}
+    _add_material_coverage(result, scan, result["sources"],pdf_info)
     result['evidence_limits'] = [{'file': name, 'sheet': sheet}
                                 for name, tables in file_tables.items() for sheet, table in tables.items()
                                 if table.get('limited')]
@@ -1186,6 +1224,19 @@ class DemoHandler(BaseHTTPRequestHandler):
         if path == "/review-ui.js":
             self._file(STATIC_DIR / "review-ui.js", "text/javascript; charset=utf-8")
             return
+        if path == '/reference-ui.js':
+            self._file(STATIC_DIR/'reference-ui.js','text/javascript; charset=utf-8')
+            return
+        if path == '/coverage-labels.js':
+            self._file(STATIC_DIR/'coverage-labels.js','text/javascript; charset=utf-8')
+            return
+        if path.startswith('/api/reference/'):
+            scan=path.removeprefix('/api/reference/')
+            try:
+                local_reviews(scan)
+                self._json(HTTPStatus.OK,{'ok':True,'comparisons':reference_comparison.ReferenceComparisonService(RUNTIME_DIR).reports(LOCAL_ACTOR,scan)})
+            except review_store.ReviewError as exc:self._json(exc.status,{'ok':False,'error':str(exc)})
+            return
         if path == '/content-ui.js':
             self._file(STATIC_DIR / 'content-ui.js', 'text/javascript; charset=utf-8')
             return
@@ -1250,6 +1301,7 @@ class DemoHandler(BaseHTTPRequestHandler):
                 {
                     "ok": not version.startswith("unavailable:"),
                     "service": "PaperAudit MVP",
+                    "runtime_id":hashlib.sha256(RUNTIME_DIR.resolve().as_posix().casefold().encode('utf-8')).hexdigest()[:16],
                     "engine": version,
                     "max_upload_mb": MAX_UPLOAD_BYTES // 1024 // 1024,
                     "max_batch_mb": MAX_BATCH_BYTES // 1024 // 1024,
@@ -1291,11 +1343,20 @@ class DemoHandler(BaseHTTPRequestHandler):
         if not self._local_request():
             return
         path = urlparse(self.path).path
-        if path not in {"/api/scan", "/api/jobs", "/api/materials/discover", "/api/materials/import", "/api/reviews", "/api/reports", "/api/jobs/cancel", '/api/jobs/retry', '/api/content/prepare', '/api/content/start', '/api/content/quote', '/api/content/cancel', '/api/explanations/quote', '/api/explanations/run'}:
+        if path not in {"/api/scan", "/api/jobs", "/api/materials/discover", "/api/materials/import", "/api/reviews", "/api/reports", "/api/jobs/cancel", '/api/jobs/retry', '/api/content/prepare', '/api/content/start', '/api/content/quote', '/api/content/cancel', '/api/explanations/quote', '/api/explanations/run','/api/reference/preview','/api/reference/compare'}:
             self.send_error(HTTPStatus.NOT_FOUND)
             return
         try:
             body = self._request_json()
+            if path.startswith('/api/reference/'):
+                scan=body.get('scan_id');local_reviews(scan)
+                service=reference_comparison.ReferenceComparisonService(RUNTIME_DIR)
+                if path.endswith('/preview'):
+                    filename,payload,_=decode_upload_body(body);validate_upload(filename,payload,'review')
+                    answer=service.upload(LOCAL_ACTOR,scan,body.get('source_file'),filename,payload)
+                else:answer=service.compare(LOCAL_ACTOR,scan,body.get('reference_id'),body.get('source_sheet'),body.get('reference_sheet'),
+                            body.get('keys'),body.get('columns'),body.get('confirm_order'))
+                self._json(HTTPStatus.OK,{'ok':True,'reference':answer});return
             if path.startswith('/api/explanations/'):
                 scan=body.get('scan_id'); finding=body.get('finding_id')
                 local_reviews(scan)
@@ -1333,9 +1394,11 @@ class DemoHandler(BaseHTTPRequestHandler):
                                       body.get('note'), body.get('revision'), body.get('request_key'))
                     self._json(HTTPStatus.OK, {'ok': True, 'review': view})
                 else:
-                    with agent_service.LOCK:
+                    with agent_service.LOCK, finding_explanations.LOCK, reference_comparison.LOCK:
                         content = agent_service.AgentService(RUNTIME_DIR).report_context(LOCAL_ACTOR,scan_id)
-                        snap = store.freeze(LOCAL_ACTOR, scan_id, body.get('revision'), body.get('request_key'),content)
+                        ai = finding_explanations.FindingExplanationService(RUNTIME_DIR).report_context(LOCAL_ACTOR,scan_id)
+                        reference=reference_comparison.ReferenceComparisonService(RUNTIME_DIR).report_context(LOCAL_ACTOR,scan_id)
+                        snap = store.freeze(LOCAL_ACTOR, scan_id, body.get('revision'), body.get('request_key'),content,finding_ai=ai,reference_review=reference)
                     exported = report_exports.export_snapshot(store, LOCAL_ACTOR, snap)
                     self._json(HTTPStatus.OK, {'ok': True, 'report': exported})
                 return

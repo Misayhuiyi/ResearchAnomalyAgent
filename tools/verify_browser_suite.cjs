@@ -2,6 +2,8 @@ const fs=require('fs'),path=require('path'),{spawnSync}=require('child_process')
 const root=path.resolve(__dirname,'..'),out=path.resolve(process.env.PAPER_AUDIT_VERIFICATION_DIR||path.join(root,'docs','verification','2026-09-30-current'));
 if(!out.startsWith(path.join(root,'docs','verification')+path.sep))throw Error('Verification directory must be inside docs/verification.');
 const base=process.env.DEMO_URL;
+// Screenshots are private run evidence, not publishable product documents.
+process.env.PAPER_AUDIT_SCREENSHOT_DIR=process.env.PAPER_AUDIT_SCREENSHOT_DIR||out;
 if(!base||!['127.0.0.1','localhost'].includes(new URL(base).hostname)||new URL(base).port==='8765')throw Error('Independent test server required.');
 fs.mkdirSync(out,{recursive:true});
 const runs=[];

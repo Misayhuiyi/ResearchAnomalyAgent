@@ -11,6 +11,8 @@ __pycache__/
 runtime/
 **/runtime/
 delivery/
+test-corpus/
+test-results/
 docs/verification/
 docs/archive/
 docs/product/_qa*/

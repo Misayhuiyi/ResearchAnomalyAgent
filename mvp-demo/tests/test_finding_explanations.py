@@ -57,12 +57,19 @@ class ExplanationTests(unittest.TestCase):
         from finding_explanations import validate_explanation
         cautious=validate_explanation({**VALID,'report_summary':'这只是待复核的统计信号，不能据此认定科研不端。'})
         self.assertIn('不能据此认定科研不端',cautious['report_summary'])
+        # A narrowly negated conclusion must not be mistaken for an accusation.
+        cautious=validate_explanation({**VALID,'report_summary':'尚不能据此判断存在科研不端，建议先核对原始记录。'})
+        self.assertIn('尚不能据此判断存在科研不端',cautious['report_summary'])
         with self.assertRaises(ModelError):
             validate_explanation({**VALID,'report_summary':'这证明作者造假。'})
         with self.assertRaises(ModelError):
             validate_explanation({**VALID,'report_summary':'作者存在科研不端。'})
         with self.assertRaises(ModelError):
             validate_explanation({**VALID,'report_summary':'这不代表科研不端结论。但是作者存在学术不端。'})
+        with self.assertRaises(ModelError):
+            validate_explanation({**VALID,'report_summary':'尚不能据此判断存在科研不端，但是作者存在学术不端。'})
+        with self.assertRaises(ModelError):
+            validate_explanation({**VALID,'report_summary':'目前不能排除存在科研不端。'})
 
     def test_quote_confirm_persists_and_does_not_change_scan(self):
         quote=self.service.quote(LOCAL_ACTOR,self.scan,self.finding)

@@ -3,6 +3,8 @@
   let review=null, loadingScan=null, saving=false, exporting=false, reportRequest=null;
   const drafts=new Map(), saveRequests=new Map();
   window.addEventListener('content-review-changed',()=>{reportRequest=null});
+  window.addEventListener('finding-ai-changed',()=>{reportRequest=null});
+  window.addEventListener('reference-review-changed',()=>{reportRequest=null});
   const stateText={pending:'待复核',explained:'已有合理解释',further_check:'需要进一步核查'};
   const key=()=>crypto.randomUUID();
   const reviewBox=document.createElement('div');

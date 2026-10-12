@@ -168,11 +168,16 @@ class ReviewStore:
             return [json.loads(row['event']) for row in db.execute(
                 'SELECT event FROM events WHERE scan=? ORDER BY revision', (scan,))]
 
-    def freeze(self, actor, scan, expected, key, content_review=None):
+    def freeze(self, actor, scan, expected, key, content_review=None, finding_ai=None, reference_review=None):
         signature = digest(['freeze', expected, content_review])
+        if finding_ai is not None or reference_review is not None:
+            signature=digest(['freeze',expected,content_review,finding_ai,reference_review])
         with self.connect() as db:
             db.execute('BEGIN IMMEDIATE')
             row = self._scan(db, actor, scan)
+            for context in (finding_ai,reference_review):
+                if context is not None and (not isinstance(context,dict) or context.get('scan_id')!=scan or context.get('source_hash')!=row['source_hash']):
+                    raise Conflict('报告补充内容与本次材料不一致。')
             replay = self._request(db, scan, key, signature)
             if replay is not None:
                 return self._snapshot(db, actor, replay['report_id'])
@@ -188,6 +193,9 @@ class ReviewStore:
             if content_review is not None:
                 snapshot['content_review'] = content_review
                 sha = digest(snapshot)
+            if finding_ai is not None:snapshot['finding_ai']=finding_ai
+            if reference_review is not None:snapshot['reference_review']=reference_review
+            sha=digest(snapshot)
             db.execute('INSERT INTO snapshots(id,scan,revision,body,hash) VALUES(?,?,?,?,?)',
                        (report_id, scan, row['revision'], encode(snapshot), sha))
             db.execute('INSERT INTO requests VALUES(?,?,?,?)', (scan, key, signature, encode({'report_id': report_id})))

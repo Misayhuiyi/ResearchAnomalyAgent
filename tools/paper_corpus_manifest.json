@@ -1,0 +1,377 @@
+{
+  "version": "public-paper-corpus-1",
+  "created_at": "2026-10-12T04:49:26.649808+00:00",
+  "purpose": "公开开发回归集及人工工具练习，不是盲测或研究诚信结论",
+  "papers": [
+    {
+      "id": "Gorman2014",
+      "doi": "10.1371/journal.pone.0090081",
+      "source": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0090081",
+      "data": "https://github.com/allisonhorst/palmerpenguins/blob/main/inst/extdata/penguins_raw.csv",
+      "license": "paper CC BY; republished data CC0"
+    },
+    {
+      "id": "Fisher1936",
+      "doi": "10.1111/j.1469-1809.1936.tb02137.x",
+      "source": "https://digital.library.adelaide.edu.au/items/d26c5e1c-2751-472f-9738-9db69dc216f7",
+      "data": "https://archive.ics.uci.edu/dataset/53/iris",
+      "license": "paper permission-granted scholarly repository copy, LOCAL ONLY; UCI data CC BY 4.0"
+    },
+    {
+      "id": "Datasaurus2017",
+      "doi": "10.1145/3025453.3025912",
+      "source": "https://www.research.autodesk.com/publications/same-stats-different-graphs/",
+      "data": "https://github.com/jumpingrivers/datasauRus/blob/main/inst/extdata/DatasaurusDozen-Long.tsv",
+      "license": "author-hosted paper LOCAL ONLY; package data license metadata retained, no redistribution"
+    },
+    {
+      "id": "Sousa2022",
+      "doi": "10.1371/journal.pone.0266012",
+      "source": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0266012",
+      "correction": "https://journals.plos.org/plosone/article?id=10.1371/journal.pone.0356340",
+      "license": "CC BY"
+    },
+    {
+      "id": "Jin2020",
+      "doi": "10.1371/journal.pgen.1008835",
+      "source": "https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1008835",
+      "correction": "https://journals.plos.org/plosgenetics/article?id=10.1371/journal.pgen.1010199",
+      "license": "CC BY"
+    }
+  ],
+  "hashes": {
+    "publisher-differences.json": "a8b5c6748e4f8f0bf9cace526b3539930375b593f2b142269743a6aa7a3be7a3",
+    "cases/B01_企鹅原始数据/Gorman2014.pdf": "cc2e8e08db55a110d5e849db35f7665e9c18c0c06cd7fce49dd3007846f3820f",
+    "cases/B01_企鹅原始数据/penguins_raw.csv": "144f623143c9360fd77322a4f86acb06dc198814dbd2669724c63e6457b907bd",
+    "cases/B01_企鹅原始数据/预期与来源.json": "927997fd007822a3016ba126fce0db78d364e6a8b94b816d18e35080ff429bd2",
+    "cases/B02_图形研究公开数据/Datasaurus2017.pdf": "b2dc59a53071d5a13dac503fe98e2f6a5d92a1afc3a0148bd6047d79516ec0a9",
+    "cases/B02_图形研究公开数据/DatasaurusDozen-Long.tsv": "c8c4792c3ed15238ba07dad6ab778adc79d72e3e1324ead4d8c1ae52849780f8",
+    "cases/B02_图形研究公开数据/预期与来源.json": "b31a835598218a75165b0f603d6ce5053ddf9d477d6d7de56115ae0b192dd4a3",
+    "cases/B03_Iris按来源修正/Fisher1936.pdf": "4c57cd984d04f90311d326ea15a3d1d60ed73bd4f81471c365c6a0b48ce49de9",
+    "cases/B03_Iris按来源修正/iris_corrected.csv": "a96ebdc17cecf7753288855b34cd04e73b17ee1aed04b65df6a0fd204152d717",
+    "cases/B03_Iris按来源修正/预期与来源.json": "85ca5a68c6c18da99e0e71cff73779d44ae8066ca5c6c0a7f71cbd049eb68a59",
+    "cases/B04_运动实验修正版/corrected.xlsx": "e95871d0dc9bb8c357126827426824383ac06c794192eeb1831bdced1e6eb2bf",
+    "cases/B04_运动实验修正版/Sousa2022.pdf": "66d5f093e60b21c4710e6593d2bec7862cafc50478e13cb55a463a973c77e414",
+    "cases/B04_运动实验修正版/Sousa2026Correction.pdf": "23182e9b194686484263047c954d11be3c28d7ad8754acfdae3b24b255db7362",
+    "cases/B04_运动实验修正版/预期与来源.json": "a5e4d16e5fb6d2427b5a02db7317f1973178d149003ae9d88c59a228dce134f1",
+    "cases/B05_果蝇修正图表数据/figures-corrected.xlsx": "7779da0eb06d4cb900cdf33cf20098e6ed23e4e5174a231b0e1b6108baa8fa4b",
+    "cases/B05_果蝇修正图表数据/Jin2020.pdf": "de57e69d2e9ddf72171670d947aa0a91ac73d533a362cf20d0108c0d2ccce6fd",
+    "cases/B05_果蝇修正图表数据/Jin2022Correction.pdf": "7355afab82ef978eec5c4631993d32f89bf6e3b12359fce5958d24836edbb465",
+    "cases/B05_果蝇修正图表数据/预期与来源.json": "dae09134ede621129fbca95d9799a1c518d9b646039e5fd9d1b1941bbe155e28",
+    "cases/C01_人工固定平移/Gorman2014.pdf": "cc2e8e08db55a110d5e849db35f7665e9c18c0c06cd7fce49dd3007846f3820f",
+    "cases/C01_人工固定平移/人工固定平移.csv": "634230ed02987cb86bddc278e5a3c9bb736fd371c864f90dc5d66100597f0781",
+    "cases/C01_人工固定平移/预期与来源.json": "9b5e9ab4177e0776c803ea364022c01675370c236715c37ca52b149f556dc4f3",
+    "cases/C02_人工固定比例/Fisher1936.pdf": "4c57cd984d04f90311d326ea15a3d1d60ed73bd4f81471c365c6a0b48ce49de9",
+    "cases/C02_人工固定比例/人工固定比例.xlsx": "4c174ae2e7168c4948a5a01bac944dd4e8ce1eac9efcf1b7d645c626c5d81b72",
+    "cases/C02_人工固定比例/预期与来源.json": "a6e294bea96d861b106fb082398797b729cd9917cec71fb25667a8df31fbd755",
+    "cases/C03_人工线性与重复/Datasaurus2017.pdf": "b2dc59a53071d5a13dac503fe98e2f6a5d92a1afc3a0148bd6047d79516ec0a9",
+    "cases/C03_人工线性与重复/人工线性与重复.tsv": "3d3914b0a5e783df9b5c43faa2d6794eec785a436a1f55a2ecdbfee813349daa",
+    "cases/C03_人工线性与重复/预期与来源.json": "35dfd8ad458ad85c620dea4167757d31c1959ecc2b4b08214287bd2661986eb8",
+    "cases/C04_人工舍入聚集/Gorman2014.pdf": "cc2e8e08db55a110d5e849db35f7665e9c18c0c06cd7fce49dd3007846f3820f",
+    "cases/C04_人工舍入聚集/人工舍入聚集.csv": "6a7fe7683aea8e474505546269d51b9989de0a631b014be3c1085103523efb9d",
+    "cases/C04_人工舍入聚集/预期与来源.json": "3e5c000d86ae8cd6c42ff7a77769f95666a4b2b387a94e25c6a1f18e4d110349",
+    "cases/E01_Iris已知录入差异/Fisher1936.pdf": "4c57cd984d04f90311d326ea15a3d1d60ed73bd4f81471c365c6a0b48ce49de9",
+    "cases/E01_Iris已知录入差异/iris_uci.csv": "45022cab5a7807929ae2e85a2d63f35672220f1bdaa0e0640e1cf2140c0ce653",
+    "cases/E01_Iris已知录入差异/预期与来源.json": "80dbd4387f43d15f3252a7ddef11fca714080c3f7b29b86a696d866561d59c8d",
+    "cases/E02_运动实验录入错误/original.xlsx": "b4e97f4ce2a8dafb3dfe855873b92216d4a78ee3bd2aa03c16562f168afb20d3",
+    "cases/E02_运动实验录入错误/Sousa2022.pdf": "66d5f093e60b21c4710e6593d2bec7862cafc50478e13cb55a463a973c77e414",
+    "cases/E02_运动实验录入错误/预期与来源.json": "9135b3db3013564d702a61f7d1e924832c81dc8ea54029b065044091fa7181ec",
+    "cases/E03_果蝇校正错误/figures-original.xlsx": "ccb8ea38e82668bef5b1a180aa708a03e6a698f379a0af3a893e70d8fb8f303d",
+    "cases/E03_果蝇校正错误/Jin2020.pdf": "de57e69d2e9ddf72171670d947aa0a91ac73d533a362cf20d0108c0d2ccce6fd",
+    "cases/E03_果蝇校正错误/预期与来源.json": "faef53118f8e74cba9d0196172a0b791c705a8bea1c8ef7cb6b6f53891070195",
+    "originals/Datasaurus2017/Datasaurus2017.pdf": "b2dc59a53071d5a13dac503fe98e2f6a5d92a1afc3a0148bd6047d79516ec0a9",
+    "originals/Datasaurus2017/DatasaurusDozen-Long.tsv": "c8c4792c3ed15238ba07dad6ab778adc79d72e3e1324ead4d8c1ae52849780f8",
+    "originals/Datasaurus2017/LICENSE": "dd5e46747164211975806ac7c6905b3fba1b118f353783f91dc2d98e0c3bd091",
+    "originals/Datasaurus2017/publisher.html": "0cf1925a4808cf48d09e57c02ad47d4095697aba0e9130015c6b196dba5fc2c8",
+    "originals/Fisher1936/download.json": "56b1225c53da34982b1078ba5dae3555005d194dcd2fb5a42c15614e678965fb",
+    "originals/Fisher1936/Fisher1936.pdf": "4c57cd984d04f90311d326ea15a3d1d60ed73bd4f81471c365c6a0b48ce49de9",
+    "originals/Fisher1936/iris.names": "71a09fb3ee237614cdb9c09d06e8ae1f610ce2a274c0d77272fea8a233e5eea3",
+    "originals/Fisher1936/iris.zip": "d11fe30213d36434a0879aab7cb00ce3c812eb7ba2495874438abff7b7b762e9",
+    "originals/Fisher1936/iris_corrected.csv": "a96ebdc17cecf7753288855b34cd04e73b17ee1aed04b65df6a0fd204152d717",
+    "originals/Fisher1936/iris_uci.csv": "45022cab5a7807929ae2e85a2d63f35672220f1bdaa0e0640e1cf2140c0ce653",
+    "originals/Gorman2014/Gorman2014.pdf": "cc2e8e08db55a110d5e849db35f7665e9c18c0c06cd7fce49dd3007846f3820f",
+    "originals/Gorman2014/penguins_raw.csv": "144f623143c9360fd77322a4f86acb06dc198814dbd2669724c63e6457b907bd",
+    "originals/Jin2020/figures-original.xlsx": "ccb8ea38e82668bef5b1a180aa708a03e6a698f379a0af3a893e70d8fb8f303d",
+    "originals/Jin2020/Jin2020.pdf": "de57e69d2e9ddf72171670d947aa0a91ac73d533a362cf20d0108c0d2ccce6fd",
+    "originals/Jin2020/original.xlsx": "729dbd830d5162b852becbcc06189e9b99e5bf82d79b9497509b9a305128c572",
+    "originals/Jin2020/publisher.html": "929d77acccb628a62434e7ac25cfb801efc5014216fdf8059639e8e4636903ea",
+    "originals/Jin2022Correction/corrected.csv": "64452d945c0afe32bde008f00e1b38b0f6298731e57ee80ad19f2189e7fc1b4a",
+    "originals/Jin2022Correction/figures-corrected.xlsx": "7779da0eb06d4cb900cdf33cf20098e6ed23e4e5174a231b0e1b6108baa8fa4b",
+    "originals/Jin2022Correction/Jin2022Correction.pdf": "7355afab82ef978eec5c4631993d32f89bf6e3b12359fce5958d24836edbb465",
+    "originals/Jin2022Correction/publisher.html": "8a497a8df94b99851a7cfeb02a1e39bf04189012875fa90b218f3088d9a2e4b1",
+    "originals/Sousa2022/original.xlsx": "b4e97f4ce2a8dafb3dfe855873b92216d4a78ee3bd2aa03c16562f168afb20d3",
+    "originals/Sousa2022/publisher.html": "f392ba412d62b1646755de8ce6b5e911c594e51cb440238a1bab334d56563852",
+    "originals/Sousa2022/Sousa2022.pdf": "66d5f093e60b21c4710e6593d2bec7862cafc50478e13cb55a463a973c77e414",
+    "originals/Sousa2026Correction/corrected.xlsx": "e95871d0dc9bb8c357126827426824383ac06c794192eeb1831bdced1e6eb2bf",
+    "originals/Sousa2026Correction/publisher.html": "c3c0b9ee1b592da1376b5bf6e3722fe9a1fcbdfb00f60d699bb9595d1b681086",
+    "originals/Sousa2026Correction/Sousa2026Correction.pdf": "23182e9b194686484263047c954d11be3c28d7ad8754acfdae3b24b255db7362"
+  },
+  "cases": [
+    {
+      "id": "B01_企鹅原始数据",
+      "title": "企鹅生态研究：未改动公开数据",
+      "group": "baseline",
+      "paper": "Gorman2014",
+      "profile": "review",
+      "uploads": [
+        "cases/B01_企鹅原始数据/Gorman2014.pdf",
+        "cases/B01_企鹅原始数据/penguins_raw.csv"
+      ],
+      "expected": {
+        "data_rows": 344
+      },
+      "notes": "未人为改动；不等于无错误认证。整数、测量精度或舍入提示需结合仪器解释。"
+    },
+    {
+      "id": "B02_图形研究公开数据",
+      "title": "同统计不同图形：作者设计数据",
+      "group": "baseline",
+      "paper": "Datasaurus2017",
+      "profile": "review",
+      "uploads": [
+        "cases/B02_图形研究公开数据/Datasaurus2017.pdf",
+        "cases/B02_图形研究公开数据/DatasaurusDozen-Long.tsv"
+      ],
+      "expected": {
+        "data_rows": 1846,
+        "groups": 13
+      },
+      "notes": "作者有意构造图形；同统计指标或结构规律不应直接判为错误。数据来自作者页面认可的维护包再发布版本。"
+    },
+    {
+      "id": "B03_Iris按来源修正",
+      "title": "Iris：按 UCI 勘误修正三个数值",
+      "group": "corrected_reference",
+      "paper": "Fisher1936",
+      "profile": "review",
+      "uploads": [
+        "cases/B03_Iris按来源修正/Fisher1936.pdf",
+        "cases/B03_Iris按来源修正/iris_corrected.csv"
+      ],
+      "expected": {
+        "data_rows": 150
+      },
+      "notes": "仅修正 UCI 指出的三处录入差异；不是独立认证的正常论文。历史 PDF 可能无法完整读出表格，无 OCR。"
+    },
+    {
+      "id": "E01_Iris已知录入差异",
+      "title": "Iris：UCI 明确记录的三处差异",
+      "group": "documented_error",
+      "paper": "Fisher1936",
+      "profile": "review",
+      "uploads": [
+        "cases/E01_Iris已知录入差异/Fisher1936.pdf",
+        "cases/E01_Iris已知录入差异/iris_uci.csv"
+      ],
+      "expected": {
+        "data_rows": 150,
+        "known_cells": [
+          {
+            "file": "iris_uci.csv",
+            "row": 36,
+            "column": 4,
+            "original": "0.1",
+            "corrected": "0.2"
+          },
+          {
+            "file": "iris_uci.csv",
+            "row": 39,
+            "column": 2,
+            "original": "3.1",
+            "corrected": "3.6"
+          },
+          {
+            "file": "iris_uci.csv",
+            "row": 39,
+            "column": 3,
+            "original": "1.5",
+            "corrected": "1.4"
+          }
+        ]
+      },
+      "notes": "样本序号35/38加表头对应文件行36/39。录入差异属于流传数据版本，不据此指控 Fisher 原论文。一般孤立录入错误不保证能被关系扫描命中。"
+    },
+    {
+      "id": "E02_运动实验录入错误",
+      "title": "运动实验：公开勘误前数据",
+      "group": "documented_error",
+      "paper": "Sousa2022",
+      "profile": "review",
+      "uploads": [
+        "cases/E02_运动实验录入错误/Sousa2022.pdf",
+        "cases/E02_运动实验录入错误/original.xlsx"
+      ],
+      "expected": {
+        "known_cells": [
+          {
+            "file": "original.xlsx",
+            "sheet": "Experiment 2",
+            "row": 6,
+            "column": 11,
+            "original": 65.95549826312603,
+            "corrected": 68.88
+          }
+        ]
+      },
+      "notes": "2026勘误明确指出第4位参与者 VO2maxVB 录入错误。原版 K5/K6 相同不是不端证据，孤立录入错可能漏检。"
+    },
+    {
+      "id": "B04_运动实验修正版",
+      "title": "运动实验：出版社修正版本",
+      "group": "corrected_reference",
+      "paper": "Sousa2022",
+      "profile": "review",
+      "uploads": [
+        "cases/B04_运动实验修正版/Sousa2022.pdf",
+        "cases/B04_运动实验修正版/Sousa2026Correction.pdf",
+        "cases/B04_运动实验修正版/corrected.xlsx"
+      ],
+      "expected": {
+        "corrected_cells": [
+          {
+            "file": "corrected.xlsx",
+            "sheet": "Experiment 2",
+            "row": 6,
+            "column": 11,
+            "value": 68.88
+          }
+        ]
+      },
+      "notes": ""
+    },
+    {
+      "id": "E03_果蝇校正错误",
+      "title": "果蝇代谢研究：勘误前图表数据",
+      "group": "documented_error",
+      "paper": "Jin2020",
+      "profile": "triage",
+      "uploads": [
+        "cases/E03_果蝇校正错误/Jin2020.pdf",
+        "cases/E03_果蝇校正错误/figures-original.xlsx"
+      ],
+      "expected": {
+        "known_error_sheet": "Data_for_S2"
+      },
+      "notes": "勘误指出批次校正只作用于AL而遗漏DR；默认测试完整 S2 图表数据，完整 S1 代谢矩阵额外留在 originals。需要重现分析才能判断，不能只凭关系线索确证。"
+    },
+    {
+      "id": "B05_果蝇修正图表数据",
+      "title": "果蝇代谢研究：出版社修正图表数据",
+      "group": "corrected_reference",
+      "paper": "Jin2020",
+      "profile": "triage",
+      "uploads": [
+        "cases/B05_果蝇修正图表数据/Jin2020.pdf",
+        "cases/B05_果蝇修正图表数据/Jin2022Correction.pdf",
+        "cases/B05_果蝇修正图表数据/figures-corrected.xlsx"
+      ],
+      "expected": {
+        "paired_case": "E03_果蝇校正错误"
+      },
+      "notes": ""
+    },
+    {
+      "id": "C01_人工固定平移",
+      "title": "企鹅数据派生：人工固定平移",
+      "group": "injected",
+      "paper": "Gorman2014",
+      "profile": "review",
+      "uploads": [
+        "cases/C01_人工固定平移/Gorman2014.pdf",
+        "cases/C01_人工固定平移/人工固定平移.csv"
+      ],
+      "expected": {
+        "relations": [
+          {
+            "kind": "constant_offset",
+            "n": 35,
+            "parameter": "offset",
+            "value": 0.3
+          }
+        ]
+      },
+      "notes": "人工生成第二列，非原论文错误；35行 treated=control+0.3。"
+    },
+    {
+      "id": "C02_人工固定比例",
+      "title": "Iris 数据派生：人工固定比例",
+      "group": "injected",
+      "paper": "Fisher1936",
+      "profile": "review",
+      "uploads": [
+        "cases/C02_人工固定比例/Fisher1936.pdf",
+        "cases/C02_人工固定比例/人工固定比例.xlsx"
+      ],
+      "expected": {
+        "relations": [
+          {
+            "kind": "constant_ratio",
+            "n": 35,
+            "parameter": "ratio",
+            "value": 2
+          }
+        ]
+      },
+      "notes": "人工生成第二列，非原论文错误；35行 scaled=control×2。"
+    },
+    {
+      "id": "C03_人工线性与重复",
+      "title": "图形数据派生：人工线性及重复",
+      "group": "injected",
+      "paper": "Datasaurus2017",
+      "profile": "forensic",
+      "uploads": [
+        "cases/C03_人工线性与重复/Datasaurus2017.pdf",
+        "cases/C03_人工线性与重复/人工线性与重复.tsv"
+      ],
+      "expected": {
+        "relations": [
+          {
+            "kind": "exact_linear",
+            "n": 35,
+            "parameter": "slope",
+            "value": 1.5
+          },
+          {
+            "kind": "identical_column",
+            "n": 35
+          }
+        ]
+      },
+      "notes": "人工生成 transformed=1.5×control+0.7；copied=control。保留全精度，非原论文问题。"
+    },
+    {
+      "id": "C04_人工舍入聚集",
+      "title": "企鹅数据派生：人工舍入聚集",
+      "group": "injected",
+      "paper": "Gorman2014",
+      "profile": "review",
+      "uploads": [
+        "cases/C04_人工舍入聚集/Gorman2014.pdf",
+        "cases/C04_人工舍入聚集/人工舍入聚集.csv"
+      ],
+      "expected": {
+        "rounding": {
+          "n": 4,
+          "rounded_to": 0.5,
+          "originals": [
+            0.451,
+            0.469,
+            0.531,
+            0.459
+          ]
+        }
+      },
+      "notes": "人工测试列；前四个值按1位小数比较均为0.5，页面应显示0.451/0.469/0.531/0.459及行2–5；原论文无该列。"
+    }
+  ],
+  "paid_calls_authorized": 0,
+  "criteria": {
+    "source_values": "zero mismatched addressed evidence cells",
+    "positive_controls": "expected relation, parameter, count all match",
+    "workflow": "upload, job, evidence, neutral review, JSON/raw, four report downloads, history",
+    "baseline": "no no-error certificate; do not require zero statistical signals",
+    "documented_error": "record whether exact known cell is highlighted; misses remain reported",
+    "ai": "mock software flow separately labelled; real calls require new fee approval"
+  }
+}
