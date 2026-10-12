@@ -24,7 +24,6 @@ docs/references/
 *.7z
 *.tar
 *.gz
-delivery-src/
 docs/tasks/
 docs/project-context.md
 docs/agentic-workflow-template.md
@@ -33,8 +32,6 @@ docs/product/*V2.1.docx
 docs/product/论文科研数据异常筛查 Agent.docx
 prototypes/论文科研数据异常筛查Agent_精简版Demo.html
 tools/build_blueprint.cjs
-tools/build_delivery.py
 tools/verify_current.py
-tools/verify_delivery.py
 tools/verify_live_model_first.py
 tools/verify_ui_logic.cjs

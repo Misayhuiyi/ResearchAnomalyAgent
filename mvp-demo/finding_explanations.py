@@ -6,6 +6,7 @@ review decision, or mathematical evidence.
 from __future__ import annotations
 
 import json
+import re
 import threading
 import time
 from decimal import Decimal
@@ -79,7 +80,12 @@ def validate_explanation(content: object) -> dict:
                 any(not isinstance(item,str) or not item.strip() or len(item)>400 for item in value)):
             raise ModelError('模型解释格式不完整，已保留原检查结果。')
     combined=encode(content)
-    if any(term in combined for term in ('造假','作弊','篡改','伪造','故意操纵','科研不端','学术不端','欺诈')):
+    # Accept narrowly negated boundary statements, while still blocking an
+    # affirmative misconduct conclusion elsewhere in the same explanation.
+    wording=re.sub(r'(?:不代表|不构成|不意味着|不等于|不能(?:据此)?(?:认定|判定|证明)|'
+                   r'不足以(?:认定|判定|证明)|无法(?:认定|判定|证明)|不得(?:认定|判定))'
+                   r'\s*(?:科研不端|学术不端)(?:结论)?','',combined)
+    if any(term in wording for term in ('造假','作弊','篡改','伪造','故意操纵','科研不端','学术不端','欺诈')):
         raise ModelError('模型解释措辞不符合辅助复核边界，未展示该解释。')
     return {key: content[key] for key in keys} | {'disclaimer': DISCLAIMER}
 

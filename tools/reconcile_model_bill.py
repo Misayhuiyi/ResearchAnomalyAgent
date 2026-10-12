@@ -8,7 +8,9 @@ import json
 import os
 import sys
 from pathlib import Path
-sys.path.insert(0,str(Path(__file__).resolve().parents[1]/'mvp-demo'))
+module_root=Path(__file__).resolve().parent
+if not (module_root/'budget_store.py').is_file():module_root=module_root.parent/'mvp-demo'
+sys.path.insert(0,str(module_root))
 from budget_store import BudgetStore
 from platform_ports import Actor
 from runtime_guard import RuntimeLease

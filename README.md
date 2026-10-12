@@ -44,6 +44,19 @@ cd mvp-demo
 
 浏览器验收脚本位于 `tools/`，必须对隔离的测试端口运行；`tools/serve_ai_mock.py` 和 `tools/verify_ai_browser.cjs` 只使用 Mock 模型，绝不调用付费接口。最新实测数量、真实 API 冒烟和未覆盖风险见[测试验收报告](docs/product/08_测试验收报告.md)。
 
+本轮回归：后端 **186/186**、交付包浏览器 **8/8**、AI 浏览器（Mock）**4/4**，四组件合成样例实际运行均成功。原 32 项规范提示的逐项处理见[本地交付范围验收](docs/product/12_佰茵云本地交付验收.md)。
+
+## 佰茵云目录交付
+
+开发源码和构建入口均纳入版本管理；运行结果及生成的交付包留本机。Windows 仓库根目录执行：
+
+```powershell
+python -m pip install -r mvp-demo/requirements.txt -r tools/requirements-build.txt
+python tools/build_delivery.py
+```
+
+在 `delivery/PaperAudit-时间戳/` 生成 Coding、Agent、AgentRun、AgentOM 四个同级组件及等内容的 Word/HTML/Markdown 说明。Coding 内仅有 `Code/Data/TempData/Result`；运行批处理入口 `python Code/PaperAudit.py`。交互工作台入口为 Agent 内的 `python harness/Workbench.py`，管理员可用 `PAPER_AUDIT_PORT` 设置本机端口。批处理读取材料及三项可选参数，不自动调用模型；DOI 和逐条费用确认通过工作台完成。
+
 ## 目录与接口
 
 ```text
@@ -51,15 +64,16 @@ mvp-demo/          本地服务、扫描/证据/模型/费用模块、页面、�
 docs/product/       建设蓝图、教程、UI 对照、调研、接入和验收文档
 docs/specs/         需求与边界合同
 tools/              构建、配置和隔离验收脚本
+delivery-src/       四组件交付入口和输入检查源码
 prototypes/         历史 UI 参考；运行页面以 mvp-demo/static 为准
 .agents/            原工作流模板及按需加载技能
 ```
 
-主要 API：`GET /api/health`；`POST /api/jobs`、`GET /api/jobs[/{id}]`；`POST /api/materials/discover`、`/api/materials/import`；`GET /artifact/{scan}/result.json`、`/scan.json`、`/report.html`；`GET /api/explanations/{scan}/{finding}`、`POST /api/explanations/quote`、`/api/explanations/run`；`GET /api/reviews/{scan}`、`POST /api/reviews`、`/api/reports`。完整请求示例见[使用教程](docs/product/03_使用教程.md)。
+主要 API：`GET /api/health`；`POST /api/jobs`、`GET /api/jobs[/{id}]`；`POST /api/materials/discover`、`/api/materials/import`；`GET /artifact/{scan}/result.json`、`/scan.json`、`/report.html`；`GET /api/explanations/{scan}/{finding}`、`POST /api/explanations/quote`、`/api/explanations/run`；`GET /api/reviews/{scan}`、`POST /api/reviews`、`/api/reports`。操作步骤见[使用教程](docs/product/03_使用教程.md)。
 
 ## 数据安全与边界
 
-本地服务只监听回环地址；上传文件、SQLite、扫描产物和模型用量记录位于忽略提交的 `runtime/`。请勿把真实论文材料、运行目录、密钥或报告产物推送到公开仓库。模型输出是可追溯的辅助说明，不会修改 PaperConan 检测结果或人工复核决定。PDF 图片/扫描件不做 OCR；导入的公开页面可能因站点限制失败；高密度 100 MB 数据尚未通过容量验收。真实模型首批冒烟通过，但只得到空建议，**不能据此宣称真实解释质量达标**。
+本地服务只监听回环地址；上传文件、SQLite、扫描产物和模型用量记录位于忽略提交的 `runtime/`。请勿把真实论文材料、运行目录、密钥或报告产物推送到公开仓库。模型输出是可追溯的辅助说明，不会修改 PaperConan 检测结果或人工复核决定。PDF 图片/扫描件不做 OCR；导入的公开页面可能因站点限制失败；高密度 100 MB 数据尚未通过容量验收。真实模型已在内置合成样例上完成一次逐条解释及页面读取测试；**真实论文解释质量、跨类型稳定性和实际账单仍未验收**。
 
 佰茵云账户认证、租户隔离、平台存储、任务调度、部署和联调由平台方后续完成，见[接入清单](docs/product/09_平台接入清单.md)。本地账号不是平台身份，不能直接对外网开放。
 

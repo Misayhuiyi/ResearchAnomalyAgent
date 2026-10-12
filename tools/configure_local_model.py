@@ -12,7 +12,9 @@ import subprocess
 import sys
 import time
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1] / 'mvp-demo'))
+module_root=Path(__file__).resolve().parent
+if not (module_root/'model_gateway.py').is_file():module_root=module_root.parent/'mvp-demo'
+sys.path.insert(0,str(module_root))
 from local_credentials import protect_secret
 from model_gateway import ENDPOINT, load_config
 

@@ -55,8 +55,14 @@ class ExplanationTests(unittest.TestCase):
         self.assertNotIn('whole_file',json.dumps(evidence))
         self.assertLessEqual(len(json.dumps(evidence).encode()),3000)
         from finding_explanations import validate_explanation
+        cautious=validate_explanation({**VALID,'report_summary':'这只是待复核的统计信号，不能据此认定科研不端。'})
+        self.assertIn('不能据此认定科研不端',cautious['report_summary'])
         with self.assertRaises(ModelError):
             validate_explanation({**VALID,'report_summary':'这证明作者造假。'})
+        with self.assertRaises(ModelError):
+            validate_explanation({**VALID,'report_summary':'作者存在科研不端。'})
+        with self.assertRaises(ModelError):
+            validate_explanation({**VALID,'report_summary':'这不代表科研不端结论。但是作者存在学术不端。'})
 
     def test_quote_confirm_persists_and_does_not_change_scan(self):
         quote=self.service.quote(LOCAL_ACTOR,self.scan,self.finding)
